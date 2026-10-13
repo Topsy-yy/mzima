@@ -12,7 +12,7 @@ The full task runs on an open-weight model hosted in-country. Patient data must 
 
 ## Project status
 
-This repository is currently documentation only. There is no runnable application, MCP server, agent, public demo, or measured evaluation yet. The requirements and intended architecture are captured in [MZIMA_SYSTEM_DESIGN.md](MZIMA_SYSTEM_DESIGN.md) and [ARCHITECTURE.md](ARCHITECTURE.md). [EVALS.md](EVALS.md) is a test plan until an implementation produces real pass/fail results.
+The repository includes an early FastAPI backend for walk-in queue management, authentication, audit events, and clinician-reviewed appointment requests. It does not yet implement the locally hosted agent or MCP workflow described in the intended architecture, and there are no measured evaluation results. The requirements and intended architecture are captured in [MZIMA_SYSTEM_DESIGN.md](MZIMA_SYSTEM_DESIGN.md) and [ARCHITECTURE.md](ARCHITECTURE.md). [EVALS.md](EVALS.md) remains a test plan until an implementation produces real pass/fail results.
 
 ## Intended sub-theme and workflow
 
