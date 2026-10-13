@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mzima-backend"
+version = "0.1.0"
+description = "Mzima — outpatient flow optimisation backend (FastAPI + LangGraph)"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.34.0",
+    "langgraph==1.2.15",
+    "langchain-openai==1.7.1",
+    "langchain-core==1.6.10",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2.6,<3",
+    "asyncpg==0.30.0",
+    "python-dotenv==1.0.1",
+    "httpx==0.28.1",
+    "python-jose[cryptography]==3.3.0",
+    "passlib[bcrypt]==1.7.4",
+    "openai>=2.45.0,<4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4",
+    "pytest-asyncio==1.4.0",
+    "httpx==0.28.1",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

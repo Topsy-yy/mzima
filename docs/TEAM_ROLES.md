@@ -12,7 +12,7 @@ Three-person team working toward a five-day prototype: patient appointment reque
 - LangGraph state machine design and implementation (intake → slot lookup → proposal → clinician review → commit → audit)
 - Mzima MCP server — all three tools: `get_appointment_slots`, `score_and_propose_route`, `review_and_commit`
 - Trust boundaries, approval token logic, and idempotency on the commit path
-- Local open-weight model selection, hosting setup (Ollama / vLLM), and prompt engineering
+- LLM gateway setup via [Agent Router](https://agentrouter.org) (replacing Ollama / vLLM for prototype); model selection (`claude-opus-4-8` default), prompt engineering, and data sovereignty plan for production move to in-country self-hosted inference
 - Agent recovery paths: bounded retries, stale slot detection, staff handoff
 - Security: prompt injection defence, data egress blocking, audit log integrity
 - Research: open-weight model options for Kenyan context, local TTS/STT alternatives to ElevenLabs, PostgreSQL MCP server evaluation, privacy and data sovereignty requirements
