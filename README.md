@@ -22,7 +22,9 @@ The repository includes an early FastAPI backend for walk-in queue management, a
 
 ## Run
 
-There is no application to run yet. The submission-ready implementation must provide a one-command start with seeded synthetic data and local model instructions.
+The React frontend is in [frontend/](frontend/). Start the FastAPI backend using [app/README.md](app/README.md), then run `npm install` and `npm run dev` from `frontend/`. The frontend proxies API requests to `http://127.0.0.1:8000` by default; see [frontend/README.md](frontend/README.md) for setup and current API limitations.
+
+This remains a prototype: use synthetic data only. The local agent/MCP workflow and one-command full-stack seeded start are not implemented yet.
 
 ## Privacy and safety
 
