@@ -58,7 +58,17 @@ def check_in_patient(
     return visit
 
 
-@router.get("/queue", response_model=list[QueueItemResponse])
+@router.get(
+    "/queue",
+    response_model=list[QueueItemResponse],
+    dependencies=[
+        Depends(
+            RoleChecker(
+                [RoleEnum.CLERK, RoleEnum.NURSE, RoleEnum.SHIFT_LEAD, RoleEnum.ADMIN]
+            )
+        )
+    ],
+)
 def get_review_queue(db: Session = Depends(get_db)):
     return get_weighted_queue(db)
 

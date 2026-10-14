@@ -88,6 +88,12 @@ def submit_clinician_decision(
             detail="Appointment request not found",
         )
 
+    if app_request.status != "PENDING_REVIEW":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Appointment request has already been decided",
+        )
+
     app_request.status = (
         "APPROVED" if decision_in.decision == "APPROVE" else "REJECTED"
     )
@@ -115,7 +121,15 @@ def submit_clinician_decision(
 
 
 @router.get(
-    "/appointments/{request_id}", response_model=AppointmentRequestResponse
+    "/appointments/{request_id}",
+    response_model=AppointmentRequestResponse,
+    dependencies=[
+        Depends(
+            RoleChecker(
+                [RoleEnum.CLERK, RoleEnum.NURSE, RoleEnum.SHIFT_LEAD, RoleEnum.ADMIN]
+            )
+        )
+    ],
 )
 def get_appointment_details(request_id: uuid.UUID, db: Session = Depends(get_db)):
     app_request = (

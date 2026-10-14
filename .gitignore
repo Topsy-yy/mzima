@@ -20,3 +20,8 @@ frontend/dist/
 frontend/*.tsbuildinfo
 frontend/vite.config.js
 frontend/vite.config.d.ts
+
+# Local development database files
+*.db
+*.sqlite
+*.sqlite3

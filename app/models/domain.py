@@ -8,11 +8,10 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
-    Integer,
     String,
     Text,
+    Uuid,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.db.session import Base
@@ -35,7 +34,7 @@ class VisitStatusEnum(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     username = Column(String(50), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
     role = Column(Enum(RoleEnum), nullable=False)
@@ -46,7 +45,7 @@ class User(Base):
 class Visit(Base):
     __tablename__ = "visits"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     token_number = Column(String(20), nullable=False, index=True)
     arrival_time = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     age_band = Column(String(20), nullable=False)  # e.g., 'under_5', 'adult', 'over_65'
@@ -69,9 +68,9 @@ class Visit(Base):
 class QueueEvent(Base):
     __tablename__ = "queue_events"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    visit_id = Column(UUID(as_uuid=True), ForeignKey("visits.id"), nullable=False)
-    actor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    visit_id = Column(Uuid(as_uuid=True), ForeignKey("visits.id"), nullable=False)
+    actor_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=True)
     event_type = Column(String(50), nullable=False)  # CALL, OVERRIDE, PROMOTION, FLAG_RAISED
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     reason_code = Column(String(100), nullable=True)
@@ -82,7 +81,7 @@ class QueueEvent(Base):
 class AppointmentRequest(Base):
     __tablename__ = "appointment_requests"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     patient_identifier = Column(String(100), nullable=False)
     requested_specialty = Column(String(100), nullable=False)
     status = Column(String(50), default="PENDING_REVIEW")  # PENDING_REVIEW, APPROVED, REJECTED
@@ -94,9 +93,9 @@ class AppointmentRequest(Base):
 class ClinicianDecision(Base):
     __tablename__ = "clinician_decisions"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    request_id = Column(UUID(as_uuid=True), ForeignKey("appointment_requests.id"), nullable=False)
-    clinician_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    request_id = Column(Uuid(as_uuid=True), ForeignKey("appointment_requests.id"), nullable=False)
+    clinician_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False)
     decision = Column(String(50), nullable=False)  # APPROVE, REJECT, MODIFY
     reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -107,8 +106,8 @@ class ClinicianDecision(Base):
 class AuditEvent(Base):
     __tablename__ = "audit_events"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    actor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    actor_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=True)
     action = Column(String(100), nullable=False)
     entity_type = Column(String(50), nullable=False)
     entity_id = Column(String(100), nullable=False)

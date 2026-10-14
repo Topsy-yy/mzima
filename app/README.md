@@ -1,6 +1,6 @@
 # Mzima Backend
 
-An early FastAPI backend for walk-in queue management and clinician-reviewed appointment requests. The API uses SQLAlchemy, Alembic, and PostgreSQL. It does not currently include the agent or MCP workflow described in the repository's intended system design.
+FastAPI backend for walk-in queue management and clinician-reviewed appointment requests. The local synthetic prototype uses SQLite by default; deployments may configure PostgreSQL with `DATABASE_URL`. The locally hosted agent and MCP workflow described in the system design are not implemented yet.
 
 ## Implemented behavior
 
@@ -29,15 +29,22 @@ All versioned endpoints use the `/api/v1` prefix.
 
 Health checks are available at `GET /health` and `GET /ready`; the latter checks database connectivity.
 
-## Local setup
+## Local synthetic setup
 
-Requirements: Python 3.11+ and a running PostgreSQL server.
+Requirements: Python 3.11+ and Node.js 20+.
 
-1. Create a PostgreSQL database and user. In a PostgreSQL admin shell, run `CREATE USER mzima_user;` and `CREATE DATABASE mzima_db OWNER mzima_user;`, then set the user's password interactively with `\\password mzima_user`. Do not put a real password in shell history.
-2. From the repository root, create a local settings file from the template: `cp app/.env.example .env`. Set `POSTGRES_PASSWORD`, `DATABASE_URL`, and `SECRET_KEY` to local development values. `.env` is excluded from Git; do not commit it.
-3. Install the project and development dependencies: `python -m pip install -e ".[dev]"`.
-4. Apply database migrations: `alembic upgrade head`.
-5. Start the API: `uvicorn app.main:app --reload`.
+Run these commands from the repository root:
+
+1. Install the backend and test dependencies: `python -m pip install -e ".[dev]"`.
+2. Copy `app/.env.example` to `.env` if you need local overrides. The default is a local `mzima.db`; the database file is ignored by Git.
+3. Create/update the local schema: `python -m alembic upgrade head`.
+4. Add synthetic queue/request records and create local staff accounts: `python -m scripts.seed_data`. It prints randomly generated demo account passwords once; save them locally. The command refuses to seed a non-SQLite database.
+5. In one terminal run `python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`.
+6. In another terminal run `cd frontend`, `npm install`, then `npm run dev`. Open `http://localhost:5173`; Vite proxies API requests to the backend.
+
+The patient form accepts synthetic patient identifiers only. Staff pages use the generated accounts and role checks enforced by the API. The SQLite setup is for local development and synthetic demonstrations only, not live care.
+
+To configure PostgreSQL instead, provide a secured PostgreSQL `DATABASE_URL` in a private `.env`, then run the same migration and API commands. Never use demo accounts or development signing keys for a deployment.
 
 Interactive API documentation is available at `/docs` while the server is running. The configured user roles are `clerk`, `nurse`, `shift_lead`, and `admin`.
 

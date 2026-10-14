@@ -1,83 +1,93 @@
-import random
+import secrets
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
+
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
+from app.core.security import get_password_hash
 from app.db.session import SessionLocal
-from app.models.domain import RoleEnum, User, Visit, VisitStatusEnum
+from app.models.domain import (
+    AppointmentRequest,
+    RoleEnum,
+    User,
+    Visit,
+    VisitStatusEnum,
+)
 
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+DEMO_ACCOUNTS = (
+    ("demo-clerk", RoleEnum.CLERK),
+    ("demo-nurse", RoleEnum.NURSE),
+    ("demo-clinician", RoleEnum.SHIFT_LEAD),
+    ("demo-admin", RoleEnum.ADMIN),
+)
 
 
-def seed():
+def seed_demo_data() -> None:
+    if not settings.DATABASE_URL.startswith("sqlite"):
+        raise RuntimeError("Synthetic demo seeding is restricted to a local SQLite database.")
+
     db: Session = SessionLocal()
+    credentials: list[tuple[str, str]] = []
     try:
-        # 1. Seed Users
-        if not db.query(User).filter(User.username == "clerk1").first():
-            clerk = User(
-                username="clerk1",
-                hashed_password=pwd_context.hash("clerkpass123"),
-                role=RoleEnum.CLERK,
+        for username, role in DEMO_ACCOUNTS:
+            if db.query(User).filter(User.username == username).first():
+                continue
+            password = secrets.token_urlsafe(18)
+            db.add(
+                User(
+                    username=username,
+                    hashed_password=get_password_hash(password),
+                    role=role,
+                    is_active=True,
+                )
             )
-            nurse = User(
-                username="nurse1",
-                hashed_password=pwd_context.hash("nursepass123"),
-                role=RoleEnum.NURSE,
-            )
-            lead = User(
-                username="lead1",
-                hashed_password=pwd_context.hash("leadpass123"),
-                role=RoleEnum.SHIFT_LEAD,
-            )
-            db.add_all([clerk, nurse, lead])
-            db.commit()
-            print("Seeded default users: clerk1, nurse1, lead1")
+            credentials.append((username, password))
 
-        # 2. Seed Synthetic Visits (Last 7 days)
+        if db.query(AppointmentRequest).count() == 0:
+            db.add_all(
+                [
+                    AppointmentRequest(
+                        patient_identifier="DEMO-REQUEST-001",
+                        requested_specialty="General outpatient",
+                        status="PENDING_REVIEW",
+                    ),
+                    AppointmentRequest(
+                        patient_identifier="DEMO-REQUEST-002",
+                        requested_specialty="Chronic care review",
+                        status="PENDING_REVIEW",
+                    ),
+                ]
+            )
+
         if db.query(Visit).count() == 0:
-            now = datetime.utcnow()
-            age_bands = ["under_5", "adult", "over_65"]
-            visit_types = ["new", "review", "refill"]
-            
-            visits = []
-            token_count = 100
-            
-            for day in range(7, 0, -1):
-                base_time = now - timedelta(days=day)
-                # Simulate morning rush hour (8 AM - 12 PM)
-                for hour in range(8, 13):
-                    arrivals_this_hour = random.randint(5, 12)
-                    for _ in range(arrivals_this_hour):
-                        token_count += 1
-                        arrival_time = base_time.replace(
-                            hour=hour,
-                            minute=random.randint(0, 59),
-                            second=random.randint(0, 59)
-                        )
-                        is_fast_track = random.random() < 0.10  # 10% fast-track
-                        
-                        visit = Visit(
-                            token_number=f"T-{token_count}",
-                            arrival_time=arrival_time,
-                            age_band=random.choice(age_bands),
-                            visit_type=random.choice(visit_types),
-                            is_fast_track=is_fast_track,
-                            red_flags={"breathing_difficulty": True} if is_fast_track else {},
-                            status=VisitStatusEnum.TRIAGED,
-                            triage_start_time=arrival_time + timedelta(minutes=random.randint(5, 25)),
-                            triage_end_time=arrival_time + timedelta(minutes=random.randint(26, 35)),
-                            triage_category=random.choice(["Green", "Yellow", "Red"]),
-                            destination="Consultation",
-                        )
-                        visits.append(visit)
-            
-            db.bulk_save_objects(visits)
-            db.commit()
-            print(f"Seeded {len(visits)} synthetic visits across past 7 days.")
+            db.add(
+                Visit(
+                    token_number="T-001",
+                    arrival_time=datetime.utcnow() - timedelta(minutes=18),
+                    age_band="adult",
+                    visit_type="new",
+                    is_fast_track=False,
+                    red_flags={},
+                    status=VisitStatusEnum.IN_QUEUE,
+                )
+            )
 
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()
 
+    if credentials:
+        print("Generated local demo accounts (credentials shown only once):")
+        for username, password in credentials:
+            print(f"  {username}: {password}")
+    else:
+        print("Demo accounts already exist; no credentials were changed.")
+    print("Seeded demo request and walk-in records only when their tables were empty.")
+
 
 if __name__ == "__main__":
-    seed()
+    seed_demo_data()

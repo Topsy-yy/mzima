@@ -89,18 +89,19 @@ Microcopy should be reassuring and purpose-limited. The page should include:
 - progress indicator
 - simple help text for wait time, service selection, and contact method
 
-### 5.2 Request form
-Fields should be minimized and structured:
+In the current prototype, this is implemented as a guided appointment-request chat: the patient chooses a supported service, enters a synthetic reference, reviews the request, and explicitly confirms before it is sent. The chat UI is not connected to an AI conversation or voice service.
 
-Required or recommended fields:
-- preferred service / appointment type
+### 5.2 Guided request collection
+Fields should be minimized and structured. The current API supports only a requested specialty and synthetic patient reference, so the prototype asks only for those fields and does not collect symptoms, contact information, or appointment preferences.
+
+Future fields, subject to backend support and facility policy:
 - visit reason in structured categories or short free text
 - language preference
 - contact method (phone / SMS / WhatsApp if needed)
 - preferred time window
 - age band only if the facility rule requires it
 
-Form behavior:
+Collection behavior:
 - show validation only when a field is necessary
 - ask one focused follow-up if the agent needs missing information
 - allow spoken input through local STT when available
@@ -209,7 +210,8 @@ This is a critical UX requirement for safe operation and aligns with the system'
 ## 7. Information architecture
 
 ### Public / patient flows
-- Home / request page
+- Public landing page
+- Guided appointment request
 - Intake form
 - Voice capture
 - Review confirmation

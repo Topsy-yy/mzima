@@ -15,9 +15,10 @@ import {
   Visit,
 } from './api';
 
-type Page = 'patient' | 'staff' | 'clinician' | 'signin';
+type Page = 'home' | 'patient' | 'staff' | 'clinician' | 'signin';
 
 const pageTitles: Record<Page, string> = {
+  home: 'Welcome to Mzima',
   patient: 'Appointment request',
   staff: 'Front desk',
   clinician: 'Review inbox',
@@ -32,7 +33,7 @@ function formatDate(value: string): string {
 }
 
 function App() {
-  const [page, setPage] = useState<Page>('patient');
+  const [page, setPage] = useState<Page>('home');
   const [token, setToken] = useState(() => sessionStorage.getItem('mzima_access_token') ?? '');
   const [user, setUser] = useState<ApiUser | null>(null);
   const [authLoading, setAuthLoading] = useState(Boolean(token));
@@ -46,10 +47,15 @@ function App() {
     }
     getCurrentUser(token)
       .then(setUser)
-      .catch(() => {
+      .catch((sessionError: unknown) => {
         sessionStorage.removeItem('mzima_access_token');
         setToken('');
         setUser(null);
+        setAuthError(
+          sessionError instanceof Error
+            ? `Your staff session could not be verified: ${sessionError.message}`
+            : 'Your staff session could not be verified. Please sign in again.',
+        );
       })
       .finally(() => setAuthLoading(false));
   }, [token]);
@@ -59,7 +65,7 @@ function App() {
     setToken('');
     setUser(null);
     setNotice('You have signed out.');
-    setPage('patient');
+    setPage('home');
   };
 
   const handleSignedIn = (accessToken: string, currentUser: ApiUser) => {
@@ -67,15 +73,19 @@ function App() {
     setToken(accessToken);
     setUser(currentUser);
     setAuthError('');
-    setPage(currentUser.role === 'clerk' ? 'staff' : 'clinician');
+    setPage(
+      currentUser.role === 'shift_lead' || currentUser.role === 'admin'
+        ? 'clinician'
+        : 'staff',
+    );
     setNotice(`Signed in as ${currentUser.username} (${currentUser.role.replace('_', ' ')}).`);
   };
 
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href="#" onClick={(event) => { event.preventDefault(); setPage('patient'); }}>
-          <span className="brand-mark">m</span>
+        <a className="brand" href="#" onClick={(event) => { event.preventDefault(); setPage('home'); }}>
+          <img className="brand-mark" src="/mzima-logo.svg" alt="" />
           <span>
             <strong>mzima</strong>
             <small>care access</small>
@@ -84,6 +94,9 @@ function App() {
 
         <div className="nav-label">WORKSPACE</div>
         <nav className="main-nav" aria-label="Main navigation">
+          <button className={page === 'home' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('home')}>
+            <span className="nav-icon">⌂</span> Home
+          </button>
           <button className={page === 'patient' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('patient')}>
             <span className="nav-icon">＋</span> Appointment request
           </button>
@@ -122,7 +135,14 @@ function App() {
           </div>
           <div className="topbar-right">
             <span className="local-indicator"><span /> Local prototype</span>
-            <button className="avatar top-avatar" title={user?.username ?? 'Staff account'} onClick={() => setPage(user ? 'clinician' : 'signin')}>
+            <button
+              className="avatar top-avatar"
+              title={user?.username ?? 'Staff account'}
+              onClick={() => {
+                if (!user) setPage('signin');
+                else setPage(user.role === 'shift_lead' || user.role === 'admin' ? 'clinician' : 'staff');
+              }}
+            >
               {user ? user.username.slice(0, 1).toUpperCase() : '·'}
             </button>
           </div>
@@ -131,15 +151,87 @@ function App() {
         {notice && <div className="notice success-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Dismiss">×</button></div>}
         {authError && <div className="notice error-notice" role="alert">{authError}<button onClick={() => setAuthError('')} aria-label="Dismiss">×</button></div>}
 
+        {page === 'home' && <LandingPage onStartRequest={() => setPage('patient')} onStaffSignIn={() => setPage('signin')} />}
         {page === 'patient' && <PatientPage onNotice={setNotice} />}
         {page === 'staff' && (
           <StaffPage token={token} user={user} authLoading={authLoading} onSignIn={() => setPage('signin')} onNotice={setNotice} />
         )}
         {page === 'clinician' && (
-          <ClinicianPage token={token} user={user} authLoading={authLoading} onSignIn={() => setPage('signin')} onNotice={setNotice} />
+          <ClinicianPage
+            token={token}
+            user={user}
+            authLoading={authLoading}
+            onSignIn={() => setPage('signin')}
+            onGoToFrontDesk={() => setPage('staff')}
+            onNotice={setNotice}
+          />
         )}
         {page === 'signin' && <SignInPage onSignedIn={handleSignedIn} onError={setAuthError} />}
       </main>
+    </div>
+  );
+}
+
+function LandingPage({
+  onStartRequest,
+  onStaffSignIn,
+}: {
+  onStartRequest: () => void;
+  onStaffSignIn: () => void;
+}) {
+  return (
+    <div className="content-wrap landing-page">
+      <section className="landing-hero">
+        <div className="landing-copy">
+          <div className="landing-kicker"><span /> CARE ACCESS, MADE SIMPLER</div>
+          <h2>A clearer first step <span>to care.</span></h2>
+          <p>Tell the clinic what kind of appointment you need. Your request goes to the clinic team for review.</p>
+          <div className="landing-actions">
+            <button className="primary-button landing-primary" onClick={onStartRequest}>Start an appointment request <span>→</span></button>
+            <button className="landing-secondary" onClick={onStaffSignIn}>Clinic staff sign in</button>
+          </div>
+          <div className="landing-assurance"><span aria-hidden="true">✓</span> A clinic staff member reviews your request.</div>
+        </div>
+        <div className="landing-visual" aria-hidden="true">
+          <div className="landing-orbit orbit-one" />
+          <div className="landing-orbit orbit-two" />
+          <div className="landing-logo-card"><img src="/mzima-logo.svg" alt="" /><span>Care starts<br />with a conversation.</span></div>
+          <div className="landing-note note-top"><span className="note-icon">✳</span><span><strong>Simple to start</strong><small>Just a few details</small></span></div>
+          <div className="landing-note note-bottom"><span className="note-check">✓</span><span><strong>Reviewed by people</strong><small>Your clinic team is in charge</small></span></div>
+        </div>
+      </section>
+
+      <section className="landing-details" aria-label="How Mzima works">
+        <div className="landing-section-heading">
+          <div><span className="eyebrow">HOW IT WORKS</span><h3>A simple path to your next step.</h3></div>
+          <p>No diagnosis or automatic booking—just a clear way to send a request to your clinic.</p>
+        </div>
+        <div className="landing-steps">
+          <article className="landing-step">
+            <span className="landing-step-number">01</span>
+            <span className="landing-step-icon" aria-hidden="true">↗</span>
+            <h4>Tell us what you need</h4>
+            <p>Choose the service you want to request and enter a demo reference.</p>
+          </article>
+          <article className="landing-step">
+            <span className="landing-step-number">02</span>
+            <span className="landing-step-icon" aria-hidden="true">◎</span>
+            <h4>Review before sending</h4>
+            <p>Check your details and confirm that you want to send the request.</p>
+          </article>
+          <article className="landing-step">
+            <span className="landing-step-number">03</span>
+            <span className="landing-step-icon" aria-hidden="true">♡</span>
+            <h4>The clinic follows up</h4>
+            <p>Clinic staff review the request and share any next steps with you.</p>
+          </article>
+        </div>
+      </section>
+
+      <div className="landing-safety">
+        <span aria-hidden="true">i</span>
+        <p><strong>For this prototype, use demo details only.</strong> Mzima does not diagnose or provide emergency help. A request is not an appointment confirmation.</p>
+      </div>
     </div>
   );
 }
@@ -150,6 +242,49 @@ function PatientPage({ onNotice }: { onNotice: (message: string) => void }) {
   const [submitted, setSubmitted] = useState<AppointmentRequest | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [step, setStep] = useState<'service' | 'reference' | 'review' | 'submitted'>('service');
+  const [messages, setMessages] = useState<Array<{ id: number; sender: 'assistant' | 'user'; text: string }>>([
+    {
+      id: 0,
+      sender: 'assistant',
+      text: 'Hello! I can help you send an appointment request to the clinic team.',
+    },
+    {
+      id: 1,
+      sender: 'assistant',
+      text: 'Which service would you like to request?',
+    },
+  ]);
+
+  function addMessage(sender: 'assistant' | 'user', text: string) {
+    setMessages((current) => [...current, { id: current.length, sender, text }]);
+  }
+
+  function chooseService(service: string) {
+    setSpecialty(service);
+    addMessage('user', service);
+    addMessage(
+      'assistant',
+      'Thanks. Enter a synthetic patient reference so the clinic can identify this demo request.',
+    );
+    setStep('reference');
+    setError('');
+  }
+
+  function handleReferenceSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const reference = patientIdentifier.trim();
+    if (!reference) return;
+
+    setError('');
+    setPatientIdentifier(reference);
+    addMessage('user', reference);
+    addMessage(
+      'assistant',
+      `Here is your request: ${specialty}. Would you like me to send it to the clinic team?`,
+    );
+    setStep('review');
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -158,6 +293,8 @@ function PatientPage({ onNotice }: { onNotice: (message: string) => void }) {
     try {
       const request = await createAppointmentRequest(patientIdentifier.trim(), specialty);
       setSubmitted(request);
+      setStep('submitted');
+      addMessage('assistant', 'Your request has been received by the clinic team.');
       onNotice('Your appointment request was saved.');
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not submit your request.');
@@ -168,57 +305,99 @@ function PatientPage({ onNotice }: { onNotice: (message: string) => void }) {
 
   return (
     <div className="content-wrap">
-      <section className="welcome-banner">
-        <div className="welcome-copy">
-          <div className="eyebrow">A simpler way to get started</div>
-          <h2>Let’s get your appointment request underway.</h2>
-          <p>Share the service you need. Clinic staff will review your request and follow up with you.</p>
-          <div className="banner-footnote"><span className="shield">✓</span> Your request is handled by the clinic team.</div>
-        </div>
-        <div className="banner-art" aria-hidden="true"><div className="art-circle">+</div><div className="art-card"><span>REQUEST</span><strong>Received</strong><i>✓</i></div><div className="art-spark">✳</div></div>
-      </section>
-
       <div className="patient-columns">
-        <section className="panel request-panel">
-          <div className="panel-heading">
-            <div><div className="eyebrow">NEW REQUEST</div><h2>Appointment details</h2></div>
-            <span className="step-count">STEP 1 OF 1</span>
-          </div>
-          {submitted ? (
-            <div className="submitted-card" role="status">
-              <div className="submitted-icon">✓</div>
-              <div className="eyebrow">REQUEST RECEIVED</div>
-              <h3>Your request is with the clinic team.</h3>
-              <p>Keep this reference for follow-up. This is a request receipt, not a confirmed appointment.</p>
-              <dl className="request-summary">
-                <div><dt>Reference</dt><dd>{submitted.id}</dd></div>
-                <div><dt>Requested service</dt><dd>{submitted.requested_specialty}</dd></div>
-                <div><dt>Status</dt><dd><span className="status-chip pending">{submitted.status.replace(/_/g, ' ')}</span></dd></div>
-                <div><dt>Submitted</dt><dd>{formatDate(submitted.created_at)}</dd></div>
-              </dl>
-              <button className="secondary-button" onClick={() => { setSubmitted(null); setPatientIdentifier(''); }}>Make another request</button>
+        <section className="panel chat-panel" aria-label="Appointment request assistant">
+          <div className="chat-header">
+            <div className="chat-assistant">
+              <img className="chat-avatar" src="/mzima-logo.svg" alt="" />
+              <div>
+                <strong>Mzima assistant</strong>
+                <span><i /> Here to help with your request</span>
+              </div>
             </div>
-          ) : (
-            <form className="stack-form" onSubmit={handleSubmit}>
-              <div className="privacy-note"><span>i</span><div><strong>Only the details this prototype supports</strong><small>The current clinic API accepts a patient reference and requested specialty. Do not enter real health information.</small></div></div>
-              <label>
-                Synthetic patient reference
-                <input value={patientIdentifier} onChange={(event) => setPatientIdentifier(event.target.value)} placeholder="e.g. DEMO-024" required maxLength={100} />
-                <small>Use a demo identifier only. Do not use a national ID or real patient details.</small>
-              </label>
-              <label>
-                Service requested
-                <select value={specialty} onChange={(event) => setSpecialty(event.target.value)}>
-                  <option>General outpatient</option>
-                  <option>Maternal and child health</option>
-                  <option>Chronic care review</option>
-                  <option>Follow-up appointment</option>
-                </select>
-              </label>
-              {error && <p className="inline-error" role="alert">{error}</p>}
-              <button className="primary-button" disabled={loading}>{loading ? 'Sending request…' : 'Send appointment request'} <span>→</span></button>
-              <p className="form-footnote">Submitting creates a request for review. It does not book a slot or change queue position.</p>
+            <span className="chat-secure"><span aria-hidden="true">◇</span> Demo mode</span>
+          </div>
+
+          <div className="chat-context">
+            <span className="chat-context-icon" aria-hidden="true">✳</span>
+            <div>
+              <strong>A simple appointment request</strong>
+              <p>I’ll ask for a service and a demo reference. A clinic staff member reviews every request.</p>
+            </div>
+          </div>
+
+          <div className="chat-transcript" aria-live="polite" aria-relevant="additions">
+            {messages.map((message) => (
+              <div className={`chat-message ${message.sender}`} key={message.id}>
+                {message.sender === 'assistant' && <img className="message-avatar" src="/mzima-logo.svg" alt="" />}
+                <p><span className="visually-hidden">{message.sender === 'assistant' ? 'Mzima assistant: ' : 'You: '}</span>{message.text}</p>
+              </div>
+            ))}
+
+            {step === 'service' && (
+              <div className="chat-options" aria-label="Choose a service">
+                {['General outpatient', 'Maternal and child health', 'Chronic care review', 'Follow-up appointment'].map((service) => (
+                  <button className="chat-option" key={service} onClick={() => chooseService(service)}>{service}<span>↗</span></button>
+                ))}
+              </div>
+            )}
+
+            {step === 'review' && (
+              <div className="chat-review">
+                <div><span>REQUESTED SERVICE</span><strong>{specialty}</strong></div>
+                <div><span>DEMO REFERENCE</span><strong>{patientIdentifier}</strong></div>
+                {error && <p className="inline-error" role="alert">{error}</p>}
+                <form onSubmit={handleSubmit}>
+                  <button className="primary-button" disabled={loading}>{loading ? 'Sending request…' : 'Send to clinic team'} <span>→</span></button>
+                  <button type="button" className="chat-edit-button" onClick={() => { setError(''); setStep('reference'); addMessage('assistant', 'No problem. Enter your synthetic patient reference again.'); }}>Edit reference</button>
+                  <button type="button" className="chat-edit-button" onClick={() => { setStep('service'); addMessage('assistant', 'Choose a different service for your request.'); }}>Change service</button>
+                </form>
+              </div>
+            )}
+
+            {submitted && (
+              <div className="chat-receipt" role="status">
+                <div className="receipt-heading"><span>✓</span><div><strong>Request received</strong><small>Clinic staff will review it. This is not a confirmed appointment.</small></div></div>
+                <dl className="request-summary">
+                  <div><dt>Reference</dt><dd>{submitted.id}</dd></div>
+                  <div><dt>Requested service</dt><dd>{submitted.requested_specialty}</dd></div>
+                  <div><dt>Status</dt><dd><span className="status-chip pending">{submitted.status.replace(/_/g, ' ')}</span></dd></div>
+                  <div><dt>Submitted</dt><dd>{formatDate(submitted.created_at)}</dd></div>
+                </dl>
+                <button className="secondary-button" onClick={() => {
+                  setSubmitted(null);
+                  setPatientIdentifier('');
+                  setSpecialty('General outpatient');
+                  setMessages([
+                    { id: 0, sender: 'assistant', text: 'Hello! I can help you send an appointment request to the clinic team.' },
+                    { id: 1, sender: 'assistant', text: 'Which service would you like to request?' },
+                  ]);
+                  setStep('service');
+                }}>Start another request</button>
+              </div>
+            )}
+          </div>
+
+          {step === 'reference' ? (
+            <form className="chat-composer" onSubmit={handleReferenceSubmit}>
+              <label className="visually-hidden" htmlFor="chat-reference">Synthetic patient reference</label>
+              <input
+                id="chat-reference"
+                value={patientIdentifier}
+                onChange={(event) => setPatientIdentifier(event.target.value)}
+                placeholder="Type a demo reference, e.g. DEMO-024"
+                required
+                maxLength={100}
+                autoComplete="off"
+              />
+              <button className="chat-send" type="submit" aria-label="Continue" disabled={!patientIdentifier.trim()}>→</button>
+              <small>Demo reference only — never enter real health details.</small>
             </form>
+          ) : (
+            <div className="chat-composer chat-composer-disabled">
+              <span>{step === 'submitted' ? 'Your request has been sent.' : step === 'review' ? 'Review your request above' : 'Choose a service above to get started'}</span>
+              <button className="chat-send" type="button" disabled aria-label="Continue">→</button>
+            </div>
           )}
         </section>
 
@@ -226,9 +405,9 @@ function PatientPage({ onNotice }: { onNotice: (message: string) => void }) {
           <div className="eyebrow">WHAT HAPPENS NEXT</div>
           <h2>One step at a time.</h2>
           <div className="steps-list">
-            <div className="step-item"><div className="step-number current">1</div><div><strong>Request received</strong><p>Your request is saved for staff review.</p></div></div>
-            <div className="step-item"><div className="step-number">2</div><div><strong>Clinic team reviews</strong><p>A staff member checks the request and follows up if needed.</p></div></div>
-            <div className="step-item"><div className="step-number">3</div><div><strong>Appointment confirmed</strong><p>The clinic will provide details when a booking is confirmed.</p></div></div>
+            <div className="step-item"><div className={`step-number ${submitted ? 'complete' : 'current'}`}>{submitted ? '✓' : '1'}</div><div><strong>Share request details</strong><p>Choose a service and enter a synthetic demo reference.</p></div></div>
+            <div className="step-item"><div className={`step-number ${submitted ? 'current' : ''}`}>2</div><div><strong>Clinic team reviews</strong><p>A staff member checks your request and follows up if needed.</p></div></div>
+            <div className="step-item"><div className="step-number">3</div><div><strong>Next steps from the clinic</strong><p>The clinic will share appointment details if a booking is arranged.</p></div></div>
           </div>
           <div className="safety-callout"><strong>Need help sooner?</strong><p>This prototype does not assess symptoms or provide emergency advice. Contact your facility directly for urgent help.</p></div>
         </aside>
@@ -451,12 +630,14 @@ function ClinicianPage({
   user,
   authLoading,
   onSignIn,
+  onGoToFrontDesk,
   onNotice,
 }: {
   token: string;
   user: ApiUser | null;
   authLoading: boolean;
   onSignIn: () => void;
+  onGoToFrontDesk: () => void;
   onNotice: (message: string) => void;
 }) {
   const [requests, setRequests] = useState<AppointmentRequest[]>([]);
@@ -509,6 +690,9 @@ function ClinicianPage({
 
   if (authLoading) return <LoadingPanel label="Checking staff session…" />;
   if (!token || !user) return <SignInPrompt onSignIn={onSignIn} message="Sign in as a shift lead or administrator to review appointment requests." />;
+  if (user.role !== 'shift_lead' && user.role !== 'admin') {
+    return <RoleDenied onGoToFrontDesk={onGoToFrontDesk} />;
+  }
 
   return (
     <div className="content-wrap">
@@ -576,6 +760,17 @@ function LoadingPanel({ label }: { label: string }) {
 
 function SignInPrompt({ onSignIn, message }: { onSignIn: () => void; message: string }) {
   return <div className="signin-prompt panel"><div className="signin-icon">↗</div><h2>Staff sign-in required</h2><p>{message}</p><button className="primary-button" onClick={onSignIn}>Continue to sign in <span>→</span></button></div>;
+}
+
+function RoleDenied({ onGoToFrontDesk }: { onGoToFrontDesk: () => void }) {
+  return (
+    <div className="signin-prompt panel">
+      <div className="signin-icon">↗</div>
+      <h2>Clinician access required</h2>
+      <p>Your signed-in role cannot review appointment requests. A shift lead or administrator can access this inbox.</p>
+      <button className="primary-button" onClick={onGoToFrontDesk}>Go to front desk <span>→</span></button>
+    </div>
+  );
 }
 
 export default App;
