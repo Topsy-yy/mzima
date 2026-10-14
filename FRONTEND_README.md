@@ -1,14 +1,17 @@
-# Mzima frontend
+# Mzima Frontend
 
 React + TypeScript frontend for the local Mzima API prototype. The interface has a patient appointment-request page, a staff walk-in queue/front desk, and an authenticated clinician review inbox.
 
 ## Start locally
 
-1. Start the API from the repository root using the setup in [../app/README.md](../app/README.md). The API should be available at `http://127.0.0.1:8000`.
-2. In this directory, run `npm install` once, then `npm run dev`.
-3. Open `http://localhost:5173`.
+Follow the complete setup in the repository [README](../README.md), including PostgreSQL configuration and API startup. From the repository root, start the frontend in a second terminal:
 
-The Vite development server proxies `/api`, `/health`, and `/ready` to `http://127.0.0.1:8000`. Set `MZIMA_API_URL` if the backend listens elsewhere.
+```bash
+npm --prefix frontend install
+npm --prefix frontend run dev
+```
+
+Open `http://localhost:5173`. The Vite development server proxies `/api`, `/health`, and `/ready` to `http://127.0.0.1:8000`. Set `MZIMA_API_URL` in the frontend environment if the backend listens elsewhere.
 
 ## API wiring and current limits
 

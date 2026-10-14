@@ -1,36 +1,104 @@
 # Mzima | Appointment and Routing Co-pilot
 
-Mzima is a prototype concept for helping patients request an early outpatient appointment and helping facility staff review where that appointment belongs. A locally hosted reasoning agent gathers structured information, checks slots and facility-approved routing guidance, and proposes a sector and priority. A named clinician must approve, edit, or reject any proposal before it can affect a booking or queue position.
+Mzima is a synthetic-data prototype for outpatient appointment requests and clinic queue operations. It currently provides a FastAPI API for authentication, appointment-request review, walk-in queue operations, and audit events, plus a React staff/patient interface. The planned local agent and MCP appointment-routing workflow are not yet implemented.
 
-**Safety boundary:** Mzima is not a diagnostic system and does not autonomously triage, refer, raise deterioration flags, or change queue position. The five-day prototype is for synthetic cases and a simulated single-facility workflow. It is not for live care.
+**Safety boundary:** this prototype is not for live care. It is not a diagnostic system and does not autonomously triage patients or change bookings or queue positions. Use synthetic data only.
 
-## What makes it an agent
+## Project Layout
 
-The agent plans a bounded workflow, calls reusable MCP tools, validates tool results, asks follow-up questions when needed, retries safe reads, and hands off when uncertain. Its own MCP server has three tools: read appointment slots, score and save a pending route proposal, and commit a clinician-approved decision. Tool inputs, outputs, timestamps and approval identity are logged.
+The repository root is the single project root. There is one Python backend (`app/`) and one frontend (`frontend/`); migrations, seed data, docs, and tests also live at the root. The old standalone `backend/` scaffold is retired.
 
-The full task runs on an open-weight model hosted in-country. Patient data must not leave the country. Any frontier-model comparison uses synthetic data only. ElevenLabs is limited to generic, non-personal audio unless an in-country deployment and data handling are verified; patient speech and personalized appointment details stay local.
+```text
+app/                 FastAPI API, domain logic, database, and adapters
+frontend/            React + TypeScript + Vite application
+migrations/          Alembic schema migrations
+scripts/             Synthetic-data seeding and phase checks
+tests/               API smoke tests
+docs/                Architecture, privacy, and evaluation documentation
+.env.example         Local API configuration template
+pyproject.toml       Python package and development dependencies
+```
 
-## Project status
+## Start Locally
 
-The repository includes an early FastAPI backend for walk-in queue management, authentication, audit events, and clinician-reviewed appointment requests. It does not yet implement the locally hosted agent or MCP workflow described in the intended architecture, and there are no measured evaluation results. The requirements and intended architecture are captured in [MZIMA_SYSTEM_DESIGN.md](MZIMA_SYSTEM_DESIGN.md) and [ARCHITECTURE.md](ARCHITECTURE.md). [EVALS.md](EVALS.md) remains a test plan until an implementation produces real pass/fail results.
+### Prerequisites
 
-## Intended sub-theme and workflow
+- Python 3.11 or newer
+- Node.js and npm
+- PostgreSQL 14 or newer, running locally
 
-**Sub-theme:** responsible agentic AI for access to care and outpatient operations.  
-**Facility:** one participating outpatient facility; selection pending.  
-**Workflow:** patient requests earliest appointment → local agent proposes a sector/priority → named clinician reviews → approved appointment enters the queue.
+### 1. Configure PostgreSQL
 
-## Run
+Create a local development role and database (choose a local password):
 
-The React frontend is in [frontend/](frontend/). Start the FastAPI backend using [app/README.md](app/README.md), then run `npm install` and `npm run dev` from `frontend/`. The frontend proxies API requests to `http://127.0.0.1:8000` by default; see [frontend/README.md](frontend/README.md) for setup and current API limitations.
+```sql
+CREATE USER mzima_user WITH PASSWORD 'replace-this-local-password';
+CREATE DATABASE mzima_db OWNER mzima_user;
+```
 
-This remains a prototype: use synthetic data only. The local agent/MCP workflow and one-command full-stack seeded start are not implemented yet.
+For example, open the PostgreSQL shell with `sudo -u postgres psql` on Linux, run those statements, then exit with `\q`.
 
-## Privacy and safety
+### 2. Configure the API
 
-Do not put real patient information in issues, commits, prompts, demo recordings or third-party tools. Use synthetic data until the facility approves the workflow, hosting, privacy controls and clinical protocol. Clinician approval must be authenticated and auditable.
+From the repository root:
 
-See [DATA_AND_PRIVACY.md](DATA_AND_PRIVACY.md) for the detailed data inventory, privacy rules, security controls, retention and pilot governance.
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set `POSTGRES_PASSWORD`, `DATABASE_URL` to the same credentials, and `SECRET_KEY` to a random development value. Keep `.env` private and out of version control. `.env.example` contains only local placeholders.
+
+Create and activate a virtual environment, then install the app and development tools:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e '.[dev]'
+```
+
+Apply the schema and seed synthetic records:
+
+```bash
+alembic upgrade head
+python scripts/seed_data.py
+```
+
+Start the API from the repository root:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The API is at `http://127.0.0.1:8000`; interactive API docs are at `http://127.0.0.1:8000/docs`. `GET /health` checks process liveness and `GET /ready` checks database connectivity.
+
+### 3. Start the frontend
+
+In a second terminal, from the repository root:
+
+```bash
+npm --prefix frontend install
+npm --prefix frontend run dev
+```
+
+Open `http://localhost:5173`. Vite proxies `/api`, `/health`, and `/ready` to `http://127.0.0.1:8000`. Set `MZIMA_API_URL` in the frontend environment if the API uses a different address.
+
+### Checks
+
+With the Python development dependencies installed:
+
+```bash
+pytest
+npm --prefix frontend run build
+```
+
+The API smoke test does not require a live database; migration, readiness, and seeded workflow checks do. Use [frontend/README.md](frontend/README.md) for frontend/API scope and limitations.
+
+## Project Status and Safety
+
+The requirements and intended architecture are documented in [docs/MZIMA_SYSTEM_DESIGN.md](docs/MZIMA_SYSTEM_DESIGN.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). [docs/EVALS.md](docs/EVALS.md) is a test plan, not a report of measured results. The current API does not yet implement the described local model, MCP agent flow, appointment slots, or agent proposal/commit workflow.
+
+Do not use real patient information in issues, commits, prompts, demos, or third-party tools. The prototype and its seeded accounts are for local synthetic data only. Review [docs/DATA_AND_PRIVACY.md](docs/DATA_AND_PRIVACY.md) before changing data handling or considering a pilot.
 
 ## Licence
 
