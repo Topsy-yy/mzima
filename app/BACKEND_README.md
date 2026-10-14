@@ -1,278 +1,314 @@
 # Mzima Backend - Setup & Run Guide
 
-## Project Structure
+This backend is a FastAPI application stored in `app/` but **started from the project root**. It uses the project-root `.env` file, Neon PostgreSQL, and optional Synthea-derived synthetic data.
 
-```
-mzima/
-├── app/                    # Python FastAPI backend (importable as `app`)
-│   ├── adapters/           # External service adapters (FHIR, etc.)
-│   ├── agent/              # AI agent workflows
-│   ├── api/                # API routes (v1 endpoints)
-│   ├── core/               # Config, security
-│   ├── db/                 # Database session, models
-│   ├── mcp/                # Model Context Protocol server
-│   ├── models/             # SQLAlchemy models
-│   ├── schemas/            # Pydantic schemas
-│   ├── services/           # Business logic (queue, audit)
-│   ├── main.py             # FastAPI app entry point
-│   ├── pyproject.toml      # Python package config
-│   ├── alembic.ini         # Alembic config (local copy)
-│   ├── .env.example        # Environment template
-│   ├── .venv/              # Virtual environment (created here)
-│   └── BACKEND_README.md   # This file
-├── migrations/             # Alembic database migrations (project root)
-├── scripts/                # Utility scripts (seeding, testing)
-├── .env                    # Environment variables (project root, not committed)
-└── neon.ts                 # Neon config (Postgres)
-```
+## Current scope
+
+The backend now includes:
+
+- Walk-in queue indexing and clinical/staff review workflows
+- Deterministic flow metrics, bottleneck detection, recommendations, and simulation
+- Synthetic patient observations and IITT-derived warning-sign alerts
+- Optional AgentRouter-based free-text extraction
+- Imported Synthea synthetic encounter and observation data
+
+It remains a **synthetic-data prototype only**. It is not approved for live patient care.
 
 ---
 
 ## Prerequisites
 
-- **Python 3.11+**
-- **Neon account** (for managed Postgres) or local PostgreSQL
-- **Node.js 20+** (for frontend, optional)
+- Python **3.11+**
+- **uv** (recommended) instead of pip
+- PostgreSQL, preferably Neon
+- Environment file at the project root (`.env`)
+
+Check tools:
+
+```bash
+uv --version
+python --version
+```
 
 ---
 
-## Quick Start (from project root)
-
-### 1. Setup Virtual Environment (inside `app/`)
+## 1. Create the environment (project root)
 
 ```bash
-cd app
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate   # Windows
+cd /home/taz/desktop/ai/mzima  # or your project root
+uv venv
+source .venv/bin/activate
 ```
 
-### 2. Install Dependencies
+Windows:
+
+```powershell
+.venv\Scripts\activate
+```
+
+---
+
+## 2. Install dependencies with uv
+
+Use uv, not pip:
 
 ```bash
-pip install -e .
+uv pip install -e .
 ```
 
-This installs the `mzima-backend` package in editable mode with all dependencies.
+This installs the `mzima-backend` package in editable mode into `.venv`.
 
-### 3. Configure Environment
-
-Copy the example and edit with your values:
+Alternative, after dependencies are already declared:
 
 ```bash
-cp app/.env.example .env
+uv sync
 ```
 
-**Required variables in `.env` (at project root):**
+---
+
+## 3. Configure environment
+
+Copy the consolidated example:
+
+```bash
+cp .env.example .env
+```
+
+Then edit `.env`. Required values:
 
 ```env
-# Database (Neon or local Postgres)
-DATABASE_URL="postgresql+psycopg2://user:pass@host:5432/dbname"
+# Database
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
+DATABASE_URL_UNPOOLED="postgresql://user:password@host:5432/dbname"
 
-# Security
-SECRET_KEY="your-random-secret-key-min-32-chars"
-ALGORITHM="HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES=480
+# Security (either variable is accepted)
+SECRET_KEY="replace-with-a-random-development-secret"
+# API_SECRET_KEY="replace-with-a-random-development-secret"
+
+JWT_ALGORITHM="HS256"
+JWT_EXPIRE_MINUTES=480
+
+# Agent Router (optional, for assistive extraction)
+AGENTROUTER_API_KEY="sk-your-agentrouter-key-here"
+BASE_URL="https://agentrouter.org/v1"
+MODEL_NAME="gpt-4o-mini"
 
 # App
 PROJECT_NAME="Mzima Backend"
 API_V1_STR="/api/v1"
-ENV="development"
+APP_ENV="development"
 DEBUG=True
 ```
 
-**For Neon (recommended):**
+Important:
+
+- The backend reads `.env` from the **project root** when started from the project root.
+- `API_SECRET_KEY` and `JWT_EXPIRE_MINUTES` are accepted as aliases for `SECRET_KEY` and `ACCESS_TOKEN_EXPIRE_MINUTES`.
+- AgentRouter is optional and prototype-only. Do not send real patient data to a hosted LLM.
+
+---
+
+## 4. Run database migrations
+
+From the project root, use uv to run Alembic:
+
 ```bash
-# After running `neon deploy`, these are auto-populated in .env:
-DATABASE_URL="postgresql+psycopg2://neondb_owner:xxx@ep-xxx-pooler.aws.neon.tech/neondb"
-DATABASE_URL_UNPOOLED="postgresql+psycopg2://neondb_owner:xxx@ep-xxx.aws.neon.tech/neondb"
-NEON_BRANCH="production"
+uv run alembic upgrade head
 ```
 
-> **Note:** Use `postgresql+psycopg2://` dialect (not `postgresql://`) to avoid psycopg v3 libpq issues.
+Do not run `alembic` directly unless it is already on your PATH.
 
-### 4. Run Database Migrations
+---
+
+## 5. Seed data
+
+Create base staff and synthetic walk-in visits:
 
 ```bash
-# From project root
-alembic upgrade head
+uv run python scripts/seed_data.py
 ```
 
-This creates all tables in your Neon/Postgres database.
-
-### 5. (Optional) Seed Test Data
+Create flow reference data:
 
 ```bash
-python scripts/seed_data.py
+uv run python scripts/seed_flow.py
 ```
 
-Creates default users (`clerk1`, `nurse1`, `lead1`) and synthetic visits.
+Import Synthea synthetic encounter and observation data:
 
-### 6. Start the Backend Server
-
-**From project root (recommended):**
 ```bash
+uv run python scripts/import_synthea.py
+```
+
+The Synthea importer replaces flow visits/observations/clinical alerts and leaves users, stations, staffing, thresholds, and clinical rules intact.
+
+---
+
+## 6. Start the backend
+
+Use uv from the project root:
+
+```bash
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+If `uvicorn` is not on your PATH, do not call it directly. `uv run` resolves it from `.venv`.
+
+Alternative with the virtualenv activated:
+
+```bash
+source .venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**From `app/` directory:**
-```bash
-cd app
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
+Endpoints:
 
-- **API Docs (Swagger):** http://localhost:8000/docs
-- **OpenAPI JSON:** http://localhost:8000/api/v1/openapi.json
-- **Health Check:** http://localhost:8000/health
-- **Readiness Check:** http://localhost:8000/ready
+- Swagger API docs: http://localhost:8000/docs
+- Health: http://localhost:8000/health
+- Readiness: http://localhost:8000/ready
+- OpenAPI JSON: http://localhost:8000/api/v1/openapi.json
 
 ---
 
-## Neon Database Setup (Production)
+## OpenAI-compatible compatibility route
 
-### One-time Setup
+Some clients probe `/v1/models`. The backend returns a small compatibility response at:
 
-```bash
-# Install Neon CLI
-npm i -g neon@latest
-
-# Login
-neon login
-
-# Initialize project (creates neon.ts)
-neon init -y --org-id YOUR_ORG_ID --project-id YOUR_PROJECT_ID --branch production --services postgres
-
-# Deploy (provisions Postgres, pulls env vars to .env)
-neon deploy
+```text
+GET /v1/models
 ```
 
-### Branch-Based Development
-
-```bash
-# Create a preview branch with data copy
-neon checkout -b feature-branch
-
-# Deploy schema changes to preview branch
-neon deploy --branch feature-branch
-
-# Delete when done
-neon branches delete feature-branch
-```
+It returns the configured `AGENTROUTER_MODEL` value so the endpoint does not produce a 404. It is a routing compatibility response, not a model-hosting endpoint.
 
 ---
 
-## API Endpoints
+## Key API groups
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/health` | Health check |
-| GET | `/ready` | Readiness + DB connectivity |
-| POST | `/api/v1/auth/login` | Login (username/password) |
-| GET | `/api/v1/auth/me` | Current user info |
-| GET | `/api/v1/queue` | Get live queue |
-| POST | `/api/v1/visits` | Create visit (triage) |
-| GET | `/api/v1/visits` | List visits |
-| POST | `/api/v1/visits/{id}/triage` | Complete triage |
-| POST | `/api/v1/queue/{id}/call` | Call next patient |
-| POST | `/api/v1/appointments/appointment-requests` | Create appointment request |
-| GET | `/api/v1/appointments/clinic/review-queue` | Pending reviews |
-| POST | `/api/v1/appointments/appointment-requests/{id}/decision` | Clinician decision |
+| GET | `/health` | Process liveness |
+| GET | `/ready` | Database connectivity |
+| POST | `/api/v1/auth/login` | Login |
+| GET | `/api/v1/auth/me` | Current user |
+| POST | `/api/v1/visits` | Walk-in check-in |
+| GET | `/api/v1/queue` | Walk-in queue |
+| POST | `/api/v1/queue/{visit_id}/call` | Call next patient |
+| POST | `/api/v1/visits/{visit_id}/triage` | Complete triage |
+| GET | `/api/v1/flow/summary` | Flow metrics |
+| GET | `/api/v1/flow/clinical-alerts` | Evidence-backed warning-sign alerts |
+| POST | `/api/v1/flow/bottleneck-scan` | Detect bottlenecks |
+| POST | `/api/v1/flow/recommendations/scan` | Generate operational recommendations |
+| POST | `/api/v1/flow/simulations` | Stakeholder-free operational simulation |
+| POST | `/api/v1/flow/observations` | Create synthetic/prototype observation set |
+| POST | `/api/v1/flow/observations/extract` | Optional AgentRouter extraction |
 
 ---
 
-## Running Tests (from project root)
+## Agent Router / AI extraction
+
+The extraction endpoint converts free text into structured fields and returns `requires_human_review: true`. It does not diagnose or assign priority.
+
+Test:
 
 ```bash
-# Run test scripts
-python scripts/test_phase5.py  # FHIR adapter + MCP tools
-python scripts/test_phase6.py  # Agent safety guardrails
+curl -X POST http://localhost:8000/api/v1/flow/observations/extract \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Patient has fever 39.2, fast breathing, severe headache, confused."}'
 ```
+
+Important status: extraction reached AgentRouter, but the configured key was rejected with **401 Unauthorized / unauthorized client detected** during this environment test. This is a remote access/authorization issue, not a local import issue. Verify the AgentRouter key, account permissions, and outbound network access before relying on extraction.
 
 ---
 
-## Development Workflow
-
-### Adding a New Migration
+## Testing helpers
 
 ```bash
-# After modifying models in app/models/
-alembic revision --autogenerate -m "description"
-alembic upgrade head
+uv run python scripts/test_phase5.py
+uv run python scripts/test_phase6.py
 ```
 
-### Code Style
+No comprehensive automated test suite has been added yet for the new flow endpoints.
+
+---
+
+## Development notes
+
+### Relative imports and package install
 
 ```bash
-# Format (if black/ruff installed)
-cd app && black . && ruff check . --fix
+uv pip install -e .
 ```
+
+Reinstall if you see:
+
+```text
+ModuleNotFoundError: No module named 'app'
+```
+
+### Migrations
+
+```bash
+uv run alembic revision --autogenerate -m "description"
+uv run alembic upgrade head
+```
+
+### Stack and style
+
+- Backend package root: `app/`
+- Migrations run from project root
+- Database schema is additive where possible
+- Flow endpoints are deterministic except optional extraction
 
 ---
 
 ## Troubleshooting
 
-### "ModuleNotFoundError: No module named 'app'"
+### `uvicorn: command not found`
+
+Use:
+
 ```bash
-cd app && pip install -e .  # Reinstall package in editable mode
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### "psycopg2.OperationalError: could not connect to server"
-- Check `DATABASE_URL` in `.env` (project root)
-- Ensure Neon branch is active (not suspended)
-- Verify IP allowlist in Neon Console
+Do not call `uvicorn` directly unless `.venv/bin` is on `PATH`.
 
-### "ImportError: no pq wrapper available"
-- Use `postgresql+psycopg2://` dialect in DATABASE_URL
-- Ensure `psycopg2-binary` is installed (not `psycopg`)
+### `alembic: command not found`
 
-### Migrations fail with "relation already exists"
+Use:
+
 ```bash
-# Reset to clean state (destructive!)
-alembic downgrade base
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
-### "alembic: No 'script_location' key found in configuration"
-- Run alembic from project root (where `alembic.ini` is symlinked/copied)
-- Or use `alembic -c app/alembic.ini upgrade head` from project root
+### `ModuleNotFoundError: No module named 'app'`
+
+Reinstall the project with uv:
+
+```bash
+uv pip install -e .
+```
+
+### `GET /v1/models` used to return 404
+
+The backend now returns a compatibility response for `/v1/models`.
+
+### AgentRouter extraction returns 401
+
+Verify:
+
+- `AGENTROUTER_API_KEY` is valid
+- `BASE_URL` points to the AgentRouter endpoint
+- The deployment environment can reach `agentrouter.org`
+- Account-level access is enabled for the key
+
+### `GET /health` returns 200 but `GET /ready` fails
+
+Check `DATABASE_URL`, Neon branch status, and network connectivity.
 
 ---
 
-## Environment Files
+## Safety boundary
 
-| File | Purpose | Committed? |
-|------|---------|------------|
-| `app/.env.example` | Template | ✅ Yes |
-| `.env` (project root) | Local overrides | ❌ No (gitignored) |
-| `.env.local` (project root) | Neon auto-pulled | ❌ No |
-
----
-
-## Production Deployment
-
-1. **Set `ENV=production` and `DEBUG=False` in `.env`**
-2. **Use strong `SECRET_KEY`** (generate with `openssl rand -hex 32`)
-3. **Use Neon pooled connection** (`DATABASE_URL` with `-pooler` endpoint)
-4. **Run behind reverse proxy** (nginx, Cloudflare, etc.)
-5. **Enable HTTPS** (required for secure cookies/auth)
-
-```bash
-# Production start (with gunicorn for multi-worker)
-gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
-```
-
----
-
-## Frontend (Optional)
-
-The React frontend is in `src/` and `index.html` (project root):
-
-```bash
-# From project root
-npm install
-npm run dev      # Dev server (Vite)
-npm run build    # Production build
-npm run preview  # Preview production build
-```
-
-Frontend expects backend at `http://localhost:8000` (configure in `src/api.ts`).
+This backend is for synthetic-data development only unless a pilot facility, clinical owners, data controller, privacy review, retention policy, and approved hosting environment are in place. It must not be described as live-care ready. Every clinical decision belongs to qualified healthcare staff.

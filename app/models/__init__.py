@@ -9,7 +9,7 @@ from app.models.domain import (
     VisitStatusEnum,
 )
 
-from app.models.flow import (  # noqa: E402
+from app.models.flow import (  # model imports are grouped by domain for clarity
     AlertStatusEnum,
     AssessmentStation,
     BottleneckAlert,
