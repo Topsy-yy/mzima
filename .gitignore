@@ -1,7 +1,7 @@
 TAZ_TASKS.md
-<<<<<<< HEAD
+# Major transformation plan (local working document)
+MAJOR.md
 
-# Local configuration and secrets
 .env
 .env.*
 *.env.local
