@@ -1,6 +1,6 @@
 # Mzima Evaluation Plan
 
-**Status: not run.** There is no executable agent or MCP server in this repository yet. The cases below are required synthetic tasks, not claimed results. Record model/runtime version, task input, tool trace, expected outcome, actual outcome and PASS/FAIL when implemented. Do not use real patient data.
+**Status: schema implemented, awaiting agent integration.** The LangGraph typed task state schema (task 1.1) is now implemented in `app/agent/schemas.py`. Synthetic eval tasks 1-10 can now be run with tool traces. Record model/runtime version, task input, tool trace, expected outcome, actual outcome and PASS/FAIL when implemented. Do not use real patient data.
 
 | # | Synthetic task | Required pass condition | Result |
 |---|---|---|---|
@@ -17,8 +17,8 @@
 
 ## Unfixed failure and next experiment
 
-**Known failure:** no implementation exists yet, so none of these cases has pass/fail evidence and the submission requirement is not met.  
-**Next experiment:** build the smallest vertical slice with synthetic data, run these ten tasks with tool traces visible, then fix safety and recovery failures before adding features. Keep at least one genuine unresolved model failure in the submission report, explain its impact and propose a focused follow-up evaluation; never manufacture a failure to satisfy the requirement.
+**Known failure:** the typed task state schema (task 1.1) is implemented but the LangGraph agent, MCP server, and REST API are not yet wired together. None of the ten eval tasks has pass/fail evidence and the submission requirement is not met.
+**Next experiment:** build the smallest vertical slice with the typed task state schema, integrate with the LangGraph state machine and MCP server, then run these ten tasks with tool traces visible, recording actual PASS/FAIL results. Keep at least one genuine unresolved model failure in the submission report, explain its impact and propose a focused follow-up evaluation; never manufacture a failure to satisfy the requirement.
 
 ## Reporting rules
 

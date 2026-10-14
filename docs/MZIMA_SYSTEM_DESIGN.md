@@ -105,7 +105,28 @@ Use a **self-hosted, read-only PostgreSQL MCP server** against synthetic demo da
 
 ## Models, privacy and voice
 
-- Run the full appointment task on an **open-weight model served inside the country** (for example, a locally hosted model through Ollama or vLLM). Do not send patient health data, audio, transcripts, prompts, logs, or identifiers outside the country. Confirm where inference, storage, telemetry and backups occur.
+### Model hosting decision: Agent Router (replacing Ollama / vLLM)
+
+**Decision:** The prototype uses [Agent Router](https://agentrouter.org) as the unified LLM gateway instead of a locally hosted Ollama or vLLM instance.
+
+**Why Agent Router:**
+- Single OpenAI-compatible and Anthropic-compatible endpoint — no local GPU or model weight downloads needed for the prototype
+- Routes to Claude Opus, GPT, Gemini, DeepSeek, and others behind one API key
+- Credentials and provider switching handled centrally — agents and tools never touch raw provider keys
+- Supports Claude Code, Kiro, Cline, and any tool that speaks Anthropic or OpenAI protocol natively
+- Fallback and model-tier routing built in (fast/smart/code tiers)
+
+**Endpoint reference:**
+
+| Protocol | Base URL | Use for |
+|---|---|---|
+| Anthropic-compatible | `https://agentrouter.org` (**no** `/v1`) | Claude Code, LangGraph with Anthropic SDK |
+| OpenAI-compatible | `https://agentrouter.org/v1` (**with** `/v1`) | OpenAI SDK, Kiro, Cursor, Cline (OpenAI provider) |
+
+Set `AGENTROUTER_API_KEY` (or `ANTHROPIC_AUTH_TOKEN` for Anthropic surface) in your shell. See `~/.kiro/settings/mcp.json` for the full env mapping.
+
+**Data sovereignty note:** For a production deployment handling real patient data, inference must move to an in-country, self-hosted model (vLLM or equivalent) with verified data residency. Agent Router is appropriate for the prototype with synthetic data only. Do not send patient health data, audio, transcripts, prompts, logs, or identifiers outside the country in production. Confirm where inference, storage, telemetry and backups occur before any pilot with real records.
+
 - A frontier API may appear only as a side-by-side comparison on synthetic data, clearly labelled and isolated from the patient-data path.
 - **ElevenLabs:** optional TTS for generic, non-personal prompts only (e.g. “Please wait for staff”). Never send patient speech, symptoms, names, appointment details or generated personalized responses to a hosted ElevenLabs service unless an approved in-country deployment is verified. Prefer local speech recognition for patient input and local TTS for personalized replies. Test Kenyan English/Kiswahili with local speakers; voice is an interface, not a triage authority.
 - Keep only the minimum structured booking data. Define consent, access, encryption, retention, audit review and deletion with the facility before handling real records.
