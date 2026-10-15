@@ -2,8 +2,8 @@ import uuid
 from typing import Any
 from sqlalchemy.orm import Session
 
-from backend.models.domain import AppointmentRequest
-from backend.services.audit.service import log_audit_event
+from app.models.domain import AppointmentRequest
+from app.services.audit.service import log_audit_event
 
 
 class AppointmentAgentWorkflow:

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from pydantic import BaseModel, Field
-from backend.models.domain import RoleEnum, VisitStatusEnum
+from app.models.domain import RoleEnum, VisitStatusEnum
 
 
 # --- Walk-in Schemas ---

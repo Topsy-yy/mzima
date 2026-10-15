@@ -2,7 +2,7 @@ import uuid
 from typing import Any
 from sqlalchemy.orm import Session
 
-from backend.models.domain import AuditEvent
+from app.models.domain import AuditEvent
 
 
 def log_audit_event(

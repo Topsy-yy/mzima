@@ -1,6 +1,6 @@
 import uuid
 from pydantic import BaseModel
-from backend.models.domain import RoleEnum
+from app.models.domain import RoleEnum
 
 
 class Token(BaseModel):

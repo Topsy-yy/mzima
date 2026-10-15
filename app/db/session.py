@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from backend.core.config import settings
+from app.core.config import settings
 
 # Use psycopg2 dialect explicitly to avoid psycopg v3 issues
 database_url = settings.DATABASE_URL

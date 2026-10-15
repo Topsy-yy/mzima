@@ -2,9 +2,9 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from backend.api.v1.router import api_router
-from backend.core.config import settings
-from backend.db.session import get_db
+from app.api.v1.router import api_router
+from app.core.config import settings
+from app.db.session import get_db
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
