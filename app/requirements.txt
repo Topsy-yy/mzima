@@ -29,7 +29,7 @@ markdown-it-py==4.2.0
 MarkupSafe==3.0.4
 mdit-py-plugins==0.6.1
 mdurl==0.1.2
--e git+https://github.com/Topsy-yy/mzima.git@042c63bdc2fe8b0c704e9420029f6b0c55d60676#egg=mzima_backend
+
 nbformat==5.11.1
 numpy==2.5.4
 opentelemetry-api==1.45.1
