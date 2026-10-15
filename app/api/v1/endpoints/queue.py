@@ -3,17 +3,17 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import RoleChecker, get_current_user, get_db
-from app.models.domain import QueueEvent, RoleEnum, User, Visit, VisitStatusEnum
-from app.schemas.domain import (
+from backend.api.deps import RoleChecker, get_current_user, get_db
+from backend.models.domain import QueueEvent, RoleEnum, User, Visit, VisitStatusEnum
+from backend.schemas.domain import (
     CallTokenRequest,
     QueueItemResponse,
     TriageUpdate,
     VisitCreate,
     VisitResponse,
 )
-from app.services.audit.service import log_audit_event
-from app.services.queue.engine import get_weighted_queue
+from backend.services.audit.service import log_audit_event
+from backend.services.queue.engine import get_weighted_queue
 
 router = APIRouter()
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy.orm import Session
-from app.models.domain import Visit, VisitStatusEnum
-from app.schemas.domain import QueueItemResponse
+from backend.models.domain import Visit, VisitStatusEnum
+from backend.schemas.domain import QueueItemResponse
 
 
 def get_weighted_queue(db: Session) -> list[QueueItemResponse]:

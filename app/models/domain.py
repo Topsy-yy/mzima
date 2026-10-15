@@ -15,7 +15,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app.db.session import Base
+from backend.db.session import Base
 
 
 class RoleEnum(str, enum.Enum):

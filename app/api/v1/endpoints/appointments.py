@@ -2,20 +2,20 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import RoleChecker, get_current_user, get_db
-from app.models.domain import (
+from backend.api.deps import RoleChecker, get_current_user, get_db
+from backend.models.domain import (
     AppointmentRequest,
     ClinicianDecision,
     RoleEnum,
     User,
 )
-from app.schemas.domain import (
+from backend.schemas.domain import (
     AppointmentRequestCreate,
     AppointmentRequestResponse,
     ClinicianDecisionCreate,
     ClinicianDecisionResponse,
 )
-from app.services.audit.service import log_audit_event
+from backend.services.audit.service import log_audit_event
 
 router = APIRouter()
 

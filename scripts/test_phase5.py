@@ -1,6 +1,6 @@
-from app.adapters.clinic.mock_fhir import MockClinicFHIRAdapter
-from app.mcp.server import ReadOnlyMzimaMCP
-from app.models.domain import AppointmentRequest
+from backend.adapters.clinic.mock_fhir import MockClinicFHIRAdapter
+from backend.mcp.server import ReadOnlyMzimaMCP
+from backend.models.domain import AppointmentRequest
 
 
 def run_tests():

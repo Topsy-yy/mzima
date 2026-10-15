@@ -1,1 +1,1 @@
-from app.mcp.server import ReadOnlyMzimaMCP
+from backend.mcp.server import ReadOnlyMzimaMCP

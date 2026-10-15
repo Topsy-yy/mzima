@@ -1,9 +1,9 @@
 import json
 from sqlalchemy.orm import Session
 
-from app.db.session import SessionLocal
-from app.models.domain import AppointmentRequest
-from app.services.queue.engine import get_weighted_queue
+from backend.db.session import SessionLocal
+from backend.models.domain import AppointmentRequest
+from backend.services.queue.engine import get_weighted_queue
 
 
 class ReadOnlyMzimaMCP:
