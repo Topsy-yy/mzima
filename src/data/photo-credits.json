@@ -1,0 +1,58 @@
+[
+  {
+    "key": "hero",
+    "query": "medical equipment soft light",
+    "src": "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1920&q=80",
+    "photographer": "Unsplash contributor",
+    "photoPage": "https://unsplash.com/s/photos/medical-equipment-soft-light"
+  },
+  {
+    "key": "problem",
+    "query": "empty hospital corridor",
+    "src": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1200&q=80",
+    "photographer": "Unsplash contributor",
+    "photoPage": "https://unsplash.com/s/photos/empty-hospital-corridor"
+  },
+  {
+    "key": "problem-desk",
+    "query": "clipboard desk clinic",
+    "src": "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1200&q=80",
+    "photographer": "Unsplash contributor",
+    "photoPage": "https://unsplash.com/s/photos/clipboard-desk-clinic"
+  },
+  {
+    "key": "walkin",
+    "query": "waiting room chairs empty",
+    "src": "https://images.unsplash.com/photo-1494548162494-384bba4ab999?auto=format&fit=crop&w=1200&q=80",
+    "photographer": "Unsplash contributor",
+    "photoPage": "https://unsplash.com/s/photos/waiting-room-chairs-empty"
+  },
+  {
+    "key": "triage",
+    "query": "pastel medicine bottles",
+    "src": "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1200&q=80",
+    "photographer": "Unsplash contributor",
+    "photoPage": "https://unsplash.com/s/photos/pastel-medicine-bottles"
+  },
+  {
+    "key": "appointments",
+    "query": "calendar desk minimal",
+    "src": "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=1200&q=80",
+    "photographer": "Unsplash contributor",
+    "photoPage": "https://unsplash.com/s/photos/calendar-desk-minimal"
+  },
+  {
+    "key": "story",
+    "query": "plant window clinic",
+    "src": "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
+    "photographer": "Unsplash contributor",
+    "photoPage": "https://unsplash.com/s/photos/plant-window-clinic"
+  },
+  {
+    "key": "signup",
+    "query": "clinic hallway light",
+    "src": "https://images.unsplash.com/photo-1582719471384-894fbb16e074?auto=format&fit=crop&w=1200&q=80",
+    "photographer": "Unsplash contributor",
+    "photoPage": "https://unsplash.com/s/photos/clinic-hallway-light"
+  }
+]

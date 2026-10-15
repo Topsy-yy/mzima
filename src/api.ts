@@ -64,7 +64,8 @@ async function request<T>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(path, { ...options, headers });
+  const apiBase = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+  const response = await fetch(`${apiBase}${path}`, { ...options, headers, credentials: 'include' });
   if (!response.ok) {
     let message = `Request failed (${response.status})`;
     try {
@@ -174,4 +175,11 @@ export function completeVisitTriage(
     },
     token,
   );
+}
+
+export function extractObservation(text: string, token: string): Promise<{ extracted_fields: Record<string, unknown>; requires_human_review: boolean }> {
+  return request('/api/v1/flow/observations/extract', {
+    method: 'POST',
+    body: JSON.stringify({ text }),
+  }, token);
 }
