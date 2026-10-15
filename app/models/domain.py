@@ -51,7 +51,10 @@ class Visit(Base):
     arrival_time = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     age_band = Column(String(20), nullable=False)  # e.g., 'under_5', 'adult', 'over_65'
     visit_type = Column(String(20), nullable=False)  # 'new', 'review', 'refill'
-    
+    service_point = Column(String(120), nullable=True, index=True)
+    current_stage = Column(String(40), nullable=True, default="arrival")
+    first_assessment_start_time = Column(DateTime, nullable=True)
+    first_assessment_end_time = Column(DateTime, nullable=True)
     # Door Screen Flags
     is_fast_track = Column(Boolean, default=False, index=True)
     red_flags = Column(JSON, default=dict)  # {"breathing_difficulty": true, ...}

@@ -11,7 +11,10 @@ import app.models  # Ensures all models are registered
 config = context.config
 
 # Overwrite sqlalchemy.url dynamically from app settings
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+database_url = settings.DATABASE_URL
+if database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+config.set_main_option("sqlalchemy.url", database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

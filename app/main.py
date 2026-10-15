@@ -29,3 +29,17 @@ def readiness_check(db: Session = Depends(get_db)):
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Database connectivity check failed: {str(e)}",
         )
+
+
+@app.get("/v1/models")
+def compatibility_models():
+    return {
+        "object": "list",
+        "data": [
+            {
+                "id": settings.AGENTROUTER_MODEL,
+                "object": "model",
+                "owned_by": "agentrouter",
+            }
+        ],
+    }
