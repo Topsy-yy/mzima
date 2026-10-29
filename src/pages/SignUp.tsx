@@ -103,7 +103,7 @@ export function SignUp() {
     return (
       <div className="su-wrap">
         <aside className="su-side" aria-hidden="true">
-          <ImageWithFallback src={side.src} alt="Soft light in a clinic hallway" width={1200} height={800} credit={{ name: side.photographer, url: side.photoPage }} />
+          <ImageWithFallback src={side.src} alt="Red vehicle captured in a city timelapse" width={1200} height={800} credit={{ name: side.photographer, url: side.photoPage }} />
         </aside>
         <section className="su-main">
           <div className="success-box">
@@ -124,7 +124,7 @@ export function SignUp() {
         <h2>Access is reviewed by a shift lead before anything is enabled.</h2>
         <p>This is a synthetic-data prototype. Do not enter real patient information.</p>
         <div style={{ marginTop: 'auto', paddingTop: 28 }}>
-          <ImageWithFallback src={side.src} alt="Soft light in a clinic hallway" width={1200} height={800} credit={{ name: side.photographer, url: side.photoPage }} />
+          <ImageWithFallback src={side.src} alt="Red vehicle captured in a city timelapse" width={1200} height={800} credit={{ name: side.photographer, url: side.photoPage }} />
         </div>
       </aside>
       <section className="su-main">

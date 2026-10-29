@@ -34,8 +34,7 @@ python --version
 
 ## 1. Create the environment (project root)
 
-```bash
-cd /home/taz/desktop/ai/mzima  # or your project root
+```bashs
 uv venv
 source .venv/bin/activate
 ```
