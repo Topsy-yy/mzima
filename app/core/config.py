@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     SECRET_KEY: str = Field(default_factory=lambda: secrets.token_urlsafe(32))
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
+    LOCAL_AGENT_ENABLED: bool = False
+    LOCAL_MODEL_BASE_URL: str = "http://127.0.0.1:11434/v1"
+    LOCAL_MODEL_NAME: str = ""
+    LOCAL_MODEL_API_KEY: str = "local"
+    LOCAL_MODEL_TIMEOUT_SECONDS: float = 20.0
+    MCP_SERVER_COMMAND: str = "python"
+    MCP_SERVER_ARGS: str = "-m app.mcp.server"
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
