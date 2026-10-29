@@ -1,6 +1,6 @@
 # Mzima Architecture
 
-**Prototype target:** one simulated outpatient facility; synthetic data only. Full appointment requests run on an open-weight model hosted in-country. This repository currently contains design documents, not a runnable implementation.
+**Prototype target:** one simulated outpatient facility; synthetic data only. The repository has a runnable deterministic slot-proposal and clinician-approved booking slice. It does not yet include the open-weight model, LangGraph orchestration, MCP transport server, or external clinic adapter drawn below; this diagram remains the target architecture.
 
 ```mermaid
 flowchart LR
@@ -22,6 +22,8 @@ flowchart LR
 ```
 
 ## Agent and trust boundaries
+
+Current implementation: `app/mcp/appointment_tools.py` contains ordinary in-process Python functions, not an MCP protocol server. It selects the earliest available matching specialty slot and returns explicit evidence; it does not inspect patient symptoms or make clinical recommendations. The API stores this proposal as pending. A shift lead/admin decision is required to reserve capacity. No-match and capacity-conflict approvals fail closed.
 
 LangGraph carries a typed task state through intake, slot lookup, guidance lookup, proposal, clinician review, commit verification and response. The agent may plan and invoke tools, but cannot approve itself. The Mzima MCP server's `score_and_propose_route` creates a pending proposal; `review_and_commit` requires an authenticated clinician, explicit decision, reason, proposal ID and one-time approval token. Writes are idempotent and auditable. Uncertainty or repeated failure routes to a staff handoff.
 

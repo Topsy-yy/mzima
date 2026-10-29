@@ -73,6 +73,20 @@ class AppointmentRequestResponse(BaseModel):
     requested_specialty: str
     status: str
     created_at: datetime
+    proposed_slot_id: uuid.UUID | None = None
+    booked_slot_id: uuid.UUID | None = None
+    agent_proposal: dict = Field(default_factory=dict)
+
+    class Config:
+        from_attributes = True
+
+
+class AppointmentSlotResponse(BaseModel):
+    id: uuid.UUID
+    specialty: str
+    starts_at: datetime
+    capacity: int
+    booked_count: int
 
     class Config:
         from_attributes = True

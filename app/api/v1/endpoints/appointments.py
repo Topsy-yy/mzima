@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import RoleChecker, get_current_user, get_db
+from app.mcp.appointment_tools import get_appointment_slots, reserve_appointment_slot, score_and_propose_route
 from app.models.domain import (
     AppointmentRequest,
     ClinicianDecision,
@@ -12,6 +13,7 @@ from app.models.domain import (
 from app.schemas.domain import (
     AppointmentRequestCreate,
     AppointmentRequestResponse,
+    AppointmentSlotResponse,
     ClinicianDecisionCreate,
     ClinicianDecisionResponse,
 )
@@ -28,10 +30,13 @@ router = APIRouter()
 def submit_appointment_request(
     request_in: AppointmentRequestCreate, db: Session = Depends(get_db)
 ):
+    proposal = score_and_propose_route(db, request_in.requested_specialty)
     app_request = AppointmentRequest(
         patient_identifier=request_in.patient_identifier,
         requested_specialty=request_in.requested_specialty,
         status="PENDING_REVIEW",
+        proposed_slot_id=uuid.UUID(proposal["slot_id"]) if proposal["slot_id"] else None,
+        agent_proposal=proposal,
     )
     db.add(app_request)
     db.commit()
@@ -43,10 +48,15 @@ def submit_appointment_request(
         action="SUBMIT_APPOINTMENT_REQUEST",
         entity_type="AppointmentRequest",
         entity_id=str(app_request.id),
-        payload={"specialty": request_in.requested_specialty},
+        payload={"specialty": request_in.requested_specialty, "proposal": proposal},
     )
 
     return app_request
+
+
+@router.get("/slots", response_model=list[AppointmentSlotResponse])
+def list_available_slots(specialty: str, db: Session = Depends(get_db)):
+    return get_appointment_slots(db, specialty)
 
 
 @router.get(
@@ -80,6 +90,7 @@ def submit_clinician_decision(
     app_request = (
         db.query(AppointmentRequest)
         .filter(AppointmentRequest.id == request_id)
+        .with_for_update()
         .first()
     )
     if not app_request:
@@ -94,9 +105,22 @@ def submit_clinician_decision(
             detail="Appointment request has already been decided",
         )
 
-    app_request.status = (
-        "APPROVED" if decision_in.decision == "APPROVE" else "REJECTED"
-    )
+    if decision_in.decision == "APPROVE":
+        if app_request.proposed_slot_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="No available slot was proposed; this request cannot be approved as a booking",
+            )
+        booked_slot = reserve_appointment_slot(db, app_request.proposed_slot_id)
+        if booked_slot is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="The proposed slot is no longer available",
+            )
+        app_request.booked_slot_id = booked_slot.id
+        app_request.status = "BOOKED"
+    else:
+        app_request.status = "REJECTED"
 
     decision = ClinicianDecision(
         request_id=app_request.id,
@@ -114,7 +138,12 @@ def submit_clinician_decision(
         action="CLINICIAN_DECISION",
         entity_type="AppointmentRequest",
         entity_id=str(app_request.id),
-        payload={"decision": decision_in.decision, "reason": decision_in.reason},
+        payload={
+            "decision": decision_in.decision,
+            "reason": decision_in.reason,
+            "proposed_slot_id": str(app_request.proposed_slot_id) if app_request.proposed_slot_id else None,
+            "booked_slot_id": str(app_request.booked_slot_id) if app_request.booked_slot_id else None,
+        },
     )
 
     return decision

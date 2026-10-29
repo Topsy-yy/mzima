@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from datetime import datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,7 +11,7 @@ from app.api.deps import get_db
 from app.core.security import get_password_hash
 from app.db.session import Base
 from app.main import app
-from app.models.domain import RoleEnum, User
+from app.models.domain import AppointmentSlot, RoleEnum, User
 
 
 @pytest.fixture
@@ -42,6 +43,14 @@ def client() -> Generator[TestClient, None, None]:
                     role=RoleEnum.SHIFT_LEAD,
                 ),
             ]
+        )
+        db.add(
+            AppointmentSlot(
+                specialty="General outpatient",
+                starts_at=datetime.utcnow() + timedelta(days=1),
+                capacity=1,
+                booked_count=0,
+            )
         )
         db.commit()
 
@@ -87,6 +96,10 @@ def test_patient_request_is_visible_only_in_authenticated_staff_inbox(
 ) -> None:
     request = create_request(client)
     assert request["status"] == "PENDING_REVIEW"
+    assert request["agent_proposal"]["tool"] == "score_and_propose_route"
+    assert request["agent_proposal"]["status"] == "PENDING_CLINICIAN_REVIEW"
+    assert request["proposed_slot_id"]
+    assert request["booked_slot_id"] is None
 
     assert client.get("/api/v1/appointments/clinic/review-queue").status_code == 401
     assert client.get(f"/api/v1/appointments/appointments/{request['id']}").status_code == 401
@@ -99,7 +112,7 @@ def test_patient_request_is_visible_only_in_authenticated_staff_inbox(
 
 @pytest.mark.parametrize(
     ("decision", "status"),
-    [("APPROVE", "APPROVED"), ("REJECT", "REJECTED")],
+    [("APPROVE", "BOOKED"), ("REJECT", "REJECTED")],
 )
 def test_clinician_decision_requires_reason_is_audited_and_cannot_repeat(
     client: TestClient,
@@ -132,6 +145,7 @@ def test_clinician_decision_requires_reason_is_audited_and_cannot_repeat(
     )
     assert details.status_code == 200
     assert details.json()["status"] == status
+    assert (details.json()["booked_slot_id"] is not None) == (decision == "APPROVE")
 
     repeated = client.post(
         path,
@@ -139,6 +153,52 @@ def test_clinician_decision_requires_reason_is_audited_and_cannot_repeat(
         json={"decision": "APPROVE", "reason": "Second attempt"},
     )
     assert repeated.status_code == 409
+
+
+def test_approval_fails_when_request_has_no_matching_slot(client: TestClient) -> None:
+    request = client.post(
+        "/api/v1/appointments/appointment-requests",
+        json={
+            "patient_identifier": "DEMO-NO-SLOT",
+            "requested_specialty": "Unavailable service",
+        },
+    ).json()
+    token = access_token(client, "test-clinician", "test-clinician-password")
+    response = client.post(
+        f"/api/v1/appointments/appointment-requests/{request['id']}/decision",
+        headers=bearer(token),
+        json={"decision": "APPROVE", "reason": "Test no-match guard"},
+    )
+    assert response.status_code == 409
+    details = client.get(
+        f"/api/v1/appointments/appointments/{request['id']}", headers=bearer(token)
+    )
+    assert details.json()["status"] == "PENDING_REVIEW"
+    assert details.json()["booked_slot_id"] is None
+
+
+def test_stale_slot_proposal_cannot_overbook_capacity(client: TestClient) -> None:
+    first = create_request(client)
+    second = create_request(client)
+    assert first["proposed_slot_id"] == second["proposed_slot_id"]
+    token = access_token(client, "test-clinician", "test-clinician-password")
+
+    for request in (first, second):
+        response = client.post(
+            f"/api/v1/appointments/appointment-requests/{request['id']}/decision",
+            headers=bearer(token),
+            json={"decision": "APPROVE", "reason": "Synthetic capacity evaluation"},
+        )
+        if request is first:
+            assert response.status_code == 200
+        else:
+            assert response.status_code == 409
+            details = client.get(
+                f"/api/v1/appointments/appointments/{request['id']}",
+                headers=bearer(token),
+            )
+            assert details.json()["status"] == "PENDING_REVIEW"
+            assert details.json()["booked_slot_id"] is None
 
 
 def test_walk_in_queue_check_in_call_and_triage_are_role_protected(

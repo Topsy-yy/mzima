@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Integer,
     String,
     Text,
     Uuid,
@@ -86,8 +87,21 @@ class AppointmentRequest(Base):
     requested_specialty = Column(String(100), nullable=False)
     status = Column(String(50), default="PENDING_REVIEW")  # PENDING_REVIEW, APPROVED, REJECTED
     created_at = Column(DateTime, default=datetime.utcnow)
+    proposed_slot_id = Column(Uuid(as_uuid=True), ForeignKey("appointment_slots.id"), nullable=True)
+    booked_slot_id = Column(Uuid(as_uuid=True), ForeignKey("appointment_slots.id"), nullable=True)
+    agent_proposal = Column(JSON, default=dict, nullable=False)
 
     decisions = relationship("ClinicianDecision", back_populates="request")
+
+
+class AppointmentSlot(Base):
+    __tablename__ = "appointment_slots"
+
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    specialty = Column(String(100), nullable=False, index=True)
+    starts_at = Column(DateTime, nullable=False, index=True)
+    capacity = Column(Integer, nullable=False, default=1)
+    booked_count = Column(Integer, nullable=False, default=0)
 
 
 class ClinicianDecision(Base):

@@ -12,7 +12,7 @@ The full task runs on an open-weight model hosted in-country. Patient data must 
 
 ## Project status
 
-The repository includes an early FastAPI backend for walk-in queue management, authentication, audit events, and clinician-reviewed appointment requests. It does not yet implement the locally hosted agent or MCP workflow described in the intended architecture, and there are no measured evaluation results. The requirements and intended architecture are captured in [MZIMA_SYSTEM_DESIGN.md](MZIMA_SYSTEM_DESIGN.md) and [ARCHITECTURE.md](ARCHITECTURE.md). [EVALS.md](EVALS.md) remains a test plan until an implementation produces real pass/fail results.
+The repository includes a synthetic appointment workflow: a deterministic slot tool proposes the earliest matching available slot, and only an authenticated clinician approval reserves it. No-match and stale-capacity cases fail closed. This is not a model-driven agent and `app/mcp/appointment_tools.py` is an internal tool module, not a standards-compliant MCP server. Model orchestration, MCP transport/authentication, facility routing guidance, and model-based evaluation remain unimplemented.
 
 ## Intended sub-theme and workflow
 
@@ -22,9 +22,9 @@ The repository includes an early FastAPI backend for walk-in queue management, a
 
 ## Run
 
-Follow [app/README.md](app/README.md) for the complete local synthetic setup, including migrations, randomly generated staff demo accounts, the API, and the React frontend in [frontend/](frontend/). The frontend proxies API requests to `http://127.0.0.1:8000` by default; see [frontend/README.md](frontend/README.md) for current API limitations.
+Follow [app/README.md](app/README.md) for the local synthetic setup, including migrations, randomly generated staff demo accounts, sample slots, the API, and the React frontend in [frontend/](frontend/). The frontend proxies API requests to `http://127.0.0.1:8000` by default; see [frontend/README.md](frontend/README.md) for current limitations.
 
-This remains a prototype: use synthetic data only. The local agent/MCP workflow and one-command full-stack seeded start are not implemented yet.
+This remains a prototype: use synthetic data only. It is not ready for live care or deployment. Run `python -m pytest -q` for deterministic workflow evaluations and `npm --prefix frontend run build` for the frontend production check. Model/MCP behavioral cases remain not run; see [EVALS.md](EVALS.md).
 
 ## Privacy and safety
 

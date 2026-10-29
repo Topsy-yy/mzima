@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.core.security import get_password_hash
 from app.db.session import SessionLocal
 from app.models.domain import (
+    AppointmentSlot,
     AppointmentRequest,
     RoleEnum,
     User,
@@ -60,6 +61,30 @@ def seed_demo_data() -> None:
                 ]
             )
 
+        if db.query(AppointmentSlot).count() == 0:
+            db.add_all(
+                [
+                    AppointmentSlot(
+                        specialty="General outpatient",
+                        starts_at=datetime.utcnow() + timedelta(days=1),
+                        capacity=2,
+                        booked_count=0,
+                    ),
+                    AppointmentSlot(
+                        specialty="General outpatient",
+                        starts_at=datetime.utcnow() + timedelta(days=2),
+                        capacity=2,
+                        booked_count=0,
+                    ),
+                    AppointmentSlot(
+                        specialty="Chronic care review",
+                        starts_at=datetime.utcnow() + timedelta(days=1),
+                        capacity=1,
+                        booked_count=0,
+                    ),
+                ]
+            )
+
         if db.query(Visit).count() == 0:
             db.add(
                 Visit(
@@ -86,7 +111,7 @@ def seed_demo_data() -> None:
             print(f"  {username}: {password}")
     else:
         print("Demo accounts already exist; no credentials were changed.")
-    print("Seeded demo request and walk-in records only when their tables were empty.")
+    print("Seeded demo requests, appointment slots, and walk-in records only when their tables were empty.")
 
 
 if __name__ == "__main__":

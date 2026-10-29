@@ -12,6 +12,17 @@ export interface AppointmentRequest {
   requested_specialty: string;
   status: string;
   created_at: string;
+  proposed_slot_id: string | null;
+  booked_slot_id: string | null;
+  agent_proposal: {
+    tool?: string;
+    status?: string;
+    specialty?: string;
+    slot_id?: string | null;
+    starts_at?: string;
+    evidence?: string[];
+    rule_version?: string;
+  } | null;
 }
 
 export interface QueueVisit {

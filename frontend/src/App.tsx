@@ -653,6 +653,7 @@ function ClinicianPage({
     () => requests.find((request) => request.id === selectedId) ?? requests[0],
     [requests, selectedId],
   );
+  const selectedProposal = selectedRequest?.agent_proposal;
 
   const refresh = useCallback(() => {
     if (!token || !user) return;
@@ -670,6 +671,10 @@ function ClinicianPage({
   useEffect(() => {
     refresh();
   }, [refresh, refreshKey]);
+
+  useEffect(() => {
+    setDecision(selectedRequest?.proposed_slot_id ? 'APPROVE' : 'REJECT');
+  }, [selectedRequest?.id, selectedRequest?.proposed_slot_id]);
 
   async function handleDecision(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -697,7 +702,7 @@ function ClinicianPage({
   return (
     <div className="content-wrap">
       <div className="page-intro-row">
-        <div><p className="page-intro">Review each request and record a named staff decision.</p><p className="last-updated">This backend exposes requests and decisions, but not agent evidence or appointment slots yet.</p></div>
+        <div><p className="page-intro">Review the synthetic slot proposal and record a named staff decision.</p><p className="last-updated">The proposal is deterministic and does not infer diagnosis or clinical priority.</p></div>
         <button className="secondary-button" onClick={() => setRefreshKey((value) => value + 1)} disabled={loading}>↻ Refresh inbox</button>
       </div>
       {error && <div className="notice error-notice" role="alert">{error}</div>}
@@ -728,15 +733,26 @@ function ClinicianPage({
                 <div><span>Requested service</span><strong>{selectedRequest.requested_specialty}</strong></div>
                 <div><span>Submitted</span><strong>{formatDate(selectedRequest.created_at)}</strong></div>
               </div>
-              <div className="capability-note"><strong>Evidence not available from this API</strong><p>The current backend does not return agent rationale, routing rules, priority, appointment slots, or an audit-history endpoint. No recommendation is shown here as if it were real.</p></div>
+              <div className="capability-note">
+                <strong>{selectedRequest.proposed_slot_id ? 'Synthetic slot proposal' : 'No matching slot'}</strong>
+                <p>{selectedProposal?.status === 'NO_MATCH'
+                  ? 'No configured slot matches this requested service. Do not approve this request as a booking.'
+                  : selectedProposal?.starts_at
+                    ? `Earliest available matching slot: ${formatDate(selectedProposal.starts_at)}.`
+                    : 'A matching slot was not available when this request was submitted.'}</p>
+                {(selectedProposal?.evidence ?? []).length > 0 && (
+                  <ul>{selectedProposal?.evidence?.map((item) => <li key={item}>{item}</li>)}</ul>
+                )}
+                <small>Tool: {selectedProposal?.tool ?? 'none'} · Rules: {selectedProposal?.rule_version ?? 'legacy request'}</small>
+              </div>
               <form className="decision-form" onSubmit={handleDecision}>
                 <div className="eyebrow">RECORD DECISION</div>
                 <div className="decision-options">
-                  <label className={`decision-option ${decision === 'APPROVE' ? 'chosen' : ''}`}><input type="radio" name="decision" value="APPROVE" checked={decision === 'APPROVE'} onChange={() => setDecision('APPROVE')} /><span><strong>Approve request</strong><small>Mark this request approved.</small></span></label>
+                  {selectedRequest.proposed_slot_id && <label className={`decision-option ${decision === 'APPROVE' ? 'chosen' : ''}`}><input type="radio" name="decision" value="APPROVE" checked={decision === 'APPROVE'} onChange={() => setDecision('APPROVE')} /><span><strong>Approve and book slot</strong><small>Reserve the proposed synthetic slot.</small></span></label>}
                   <label className={`decision-option ${decision === 'REJECT' ? 'chosen' : ''}`}><input type="radio" name="decision" value="REJECT" checked={decision === 'REJECT'} onChange={() => setDecision('REJECT')} /><span><strong>Reject request</strong><small>Mark this request rejected.</small></span></label>
                 </div>
                 <label>Decision reason<textarea value={reason} onChange={(event) => setReason(event.target.value)} rows={3} required placeholder="Record the reason for this decision" /></label>
-                <div className="decision-footer"><span>Decision is submitted under <strong>{user.username}</strong>.</span><button className={decision === 'REJECT' ? 'danger-button' : 'primary-button'} disabled={saving}>{saving ? 'Saving decision…' : 'Submit decision'} <span>→</span></button></div>
+                <div className="decision-footer"><span>Decision is submitted under <strong>{user.username}</strong>.</span><button className={decision === 'REJECT' ? 'danger-button' : 'primary-button'} disabled={saving || (decision === 'APPROVE' && !selectedRequest.proposed_slot_id)}>{saving ? 'Saving decision…' : decision === 'APPROVE' ? 'Approve and book' : 'Reject request'} <span>→</span></button></div>
               </form>
             </>
           ) : <EmptyState title="Select a request" description="Choose an item from the inbox to review." />}
