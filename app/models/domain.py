@@ -11,6 +11,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
 )
 from sqlalchemy.orm import relationship
@@ -106,12 +107,14 @@ class AppointmentSlot(Base):
 
 class ClinicianDecision(Base):
     __tablename__ = "clinician_decisions"
+    __table_args__ = (UniqueConstraint("request_id", name="uq_clinician_decision_request"),)
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     request_id = Column(Uuid(as_uuid=True), ForeignKey("appointment_requests.id"), nullable=False)
     clinician_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False)
     decision = Column(String(50), nullable=False)  # APPROVE, REJECT, MODIFY
     reason = Column(Text, nullable=True)
+    approval_jti = Column(String(36), nullable=True, unique=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     request = relationship("AppointmentRequest", back_populates="decisions")

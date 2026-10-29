@@ -54,11 +54,14 @@ def score_and_propose_route(
     }
 
 
-def reserve_appointment_slot(db: Session, slot_id: uuid.UUID) -> AppointmentSlot | None:
+def reserve_appointment_slot(
+    db: Session, slot_id: uuid.UUID, specialty: str
+) -> AppointmentSlot | None:
     result = db.execute(
         update(AppointmentSlot)
         .where(
             AppointmentSlot.id == slot_id,
+            AppointmentSlot.specialty == specialty,
             AppointmentSlot.booked_count < AppointmentSlot.capacity,
         )
         .values(booked_count=AppointmentSlot.booked_count + 1)

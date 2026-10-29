@@ -1,9 +1,11 @@
 import uuid
+from contextlib import nullcontext
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import RoleChecker, get_current_user, get_db
-from app.mcp.appointment_tools import get_appointment_slots, reserve_appointment_slot, score_and_propose_route
+from app.core.config import settings
+from app.mcp.appointment_tools import get_appointment_slots, score_and_propose_route
 from app.models.domain import (
     AppointmentRequest,
     ClinicianDecision,
@@ -18,6 +20,12 @@ from app.schemas.domain import (
     ClinicianDecisionResponse,
 )
 from app.services.audit.service import log_audit_event
+from app.services.appointments.local_agent import (
+    LocalAgentError,
+    commit_via_mcp_sync,
+    run_local_agent_sync,
+)
+from app.services.appointments.workflow import issue_approval_token
 
 router = APIRouter()
 
@@ -50,6 +58,29 @@ def submit_appointment_request(
         entity_id=str(app_request.id),
         payload={"specialty": request_in.requested_specialty, "proposal": proposal},
     )
+
+    if settings.LOCAL_AGENT_ENABLED:
+        try:
+            proposal = run_local_agent_sync(
+                str(app_request.id),
+                app_request.requested_specialty,
+                lambda: nullcontext(db),
+            )
+            app_request.agent_proposal = proposal
+            app_request.proposed_slot_id = (
+                uuid.UUID(proposal["slot_id"]) if proposal.get("slot_id") else None
+            )
+            db.commit()
+            db.refresh(app_request)
+        except Exception as exc:
+            log_audit_event(
+                db,
+                actor_id=None,
+                action="LOCAL_AGENT_HANDOFF",
+                entity_type="AppointmentRequest",
+                entity_id=str(app_request.id),
+                payload={"error_type": type(exc).__name__},
+            )
 
     return app_request
 
@@ -105,47 +136,22 @@ def submit_clinician_decision(
             detail="Appointment request has already been decided",
         )
 
-    if decision_in.decision == "APPROVE":
-        if app_request.proposed_slot_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="No available slot was proposed; this request cannot be approved as a booking",
-            )
-        booked_slot = reserve_appointment_slot(db, app_request.proposed_slot_id)
-        if booked_slot is None:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="The proposed slot is no longer available",
-            )
-        app_request.booked_slot_id = booked_slot.id
-        app_request.status = "BOOKED"
-    else:
-        app_request.status = "REJECTED"
-
-    decision = ClinicianDecision(
+    approval_token = issue_approval_token(
         request_id=app_request.id,
         clinician_id=current_user.id,
         decision=decision_in.decision,
         reason=decision_in.reason,
     )
-    db.add(decision)
-    db.commit()
-    db.refresh(decision)
+    result = commit_via_mcp_sync(approval_token, lambda: nullcontext(db))
+    if result.get("status") == "ERROR":
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=result["detail"])
 
-    log_audit_event(
-        db,
-        actor_id=current_user.id,
-        action="CLINICIAN_DECISION",
-        entity_type="AppointmentRequest",
-        entity_id=str(app_request.id),
-        payload={
-            "decision": decision_in.decision,
-            "reason": decision_in.reason,
-            "proposed_slot_id": str(app_request.proposed_slot_id) if app_request.proposed_slot_id else None,
-            "booked_slot_id": str(app_request.booked_slot_id) if app_request.booked_slot_id else None,
-        },
+    decision = (
+        db.query(ClinicianDecision)
+        .filter(ClinicianDecision.request_id == app_request.id)
+        .one()
     )
-
     return decision
 
 

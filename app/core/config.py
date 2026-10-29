@@ -1,6 +1,7 @@
 import secrets
+from urllib.parse import urlparse
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,8 +26,18 @@ class Settings(BaseSettings):
     LOCAL_MODEL_NAME: str = ""
     LOCAL_MODEL_API_KEY: str = "local"
     LOCAL_MODEL_TIMEOUT_SECONDS: float = 20.0
-    MCP_SERVER_COMMAND: str = "python"
-    MCP_SERVER_ARGS: str = "-m app.mcp.server"
+
+    @field_validator("LOCAL_MODEL_BASE_URL")
+    @classmethod
+    def require_loopback_model_endpoint(cls, value: str) -> str:
+        parsed = urlparse(value)
+        if parsed.scheme not in {"http", "https"} or parsed.hostname not in {
+            "localhost",
+            "127.0.0.1",
+            "::1",
+        }:
+            raise ValueError("LOCAL_MODEL_BASE_URL must use a loopback host")
+        return value.rstrip("/")
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 
