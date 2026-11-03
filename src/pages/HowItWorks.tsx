@@ -78,11 +78,7 @@ export function HowItWorks() {
           </div>
         </div>
       </section>
-      <div className="max" style={{ marginBottom: 32 }}>
-        <small className="credit" style={{ display: 'block' }}>
-          Photo by <a href={hero.photoPage} target="_blank" rel="noopener noreferrer">{hero.photographer}</a> on Unsplash
-        </small>
-      </div>
+
     </main>
   );
 }

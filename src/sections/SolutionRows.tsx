@@ -13,7 +13,6 @@ const rows = [
     text: 'A clerk records an arrival. Weighted FIFO with fast-track detection and wait capping sets the order. Nothing moves on its own.',
     credit: walkin,
     alt: 'Empty waiting-room chairs in soft daylight',
-    illustrative: 'Illustrative example',
   },
   {
     kicker: 'Triage flow',
@@ -21,7 +20,6 @@ const rows = [
     text: 'A nurse completes triage using a small set of categories. The co-pilot surfaces the visit, never the verdict.',
     credit: triage,
     alt: 'Softly lit pastel medicine bottles on a shelf',
-    illustrative: 'Illustrative example',
   },
   {
     kicker: 'Appointment review',
@@ -29,7 +27,6 @@ const rows = [
     text: 'The AI agent suggests an appointment slot. A shift lead approves or rejects. Every step is logged.',
     credit: appointments,
     alt: 'A minimal calendar resting on a desk',
-    illustrative: 'Illustrative example',
   },
 ];
 
@@ -51,7 +48,6 @@ export function SolutionRows() {
                   loading="lazy"
                   credit={{ name: r.credit.photographer, url: r.credit.photoPage }}
                 />
-                <small style={{ display: 'block', marginTop: 6, color: 'var(--muted)' }}>{r.illustrative}</small>
               </div>
               <div style={{ direction: 'ltr' }}>
                 <span className="pill-badge" style={{ marginBottom: 14 }}>{r.kicker}</span>

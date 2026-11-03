@@ -4,9 +4,9 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 
 # Import settings and Base models
-from app.core.config import settings
-from app.db.session import Base
-import app.models  # Ensures all models are registered
+from backend.core.config import settings
+from backend.db.session import Base
+import backend.models  # Ensures all models are registered
 
 config = context.config
 

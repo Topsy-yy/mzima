@@ -33,9 +33,6 @@ export function Hero({ onNavigate }: Props) {
           <span aria-hidden="true">✓</span>
           Synthetic data only. Humans remain in charge of every decision.
         </div>
-        <p className="hero-credit">
-          Photo by <a href={credit.photoPage} target="_blank" rel="noopener noreferrer">{credit.photographer}</a> on Unsplash
-        </p>
       </div>
     </section>
   );

@@ -1,1 +1,0 @@
-from app.adapters.clinic.mock_fhir import MockClinicFHIRAdapter
