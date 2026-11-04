@@ -1,6 +1,6 @@
 # Mzima Backend - Setup & Run Guide
 
-This FastAPI application is in the `backend/` Python package. Run commands from the repository root unless a step says otherwise. Dependencies are managed by `backend/pyproject.toml` and `backend/uv.lock`; the virtual environment is `backend/.venv`. The app reads `.env` relative to the current working directory, so the commands below use the repository-root `.env` file. The backend supports PostgreSQL, including Neon, and optional Synthea-derived synthetic data.
+This FastAPI application is in the `backend/` Python package. Run the commands in this guide from the repository root. If your terminal is in `backend/`, first return to the repository root with `cd ..`; this ensures the app reads the repository-root `.env`. Dependencies are managed by `backend/pyproject.toml` and `backend/uv.lock`, with the virtual environment at `backend/.venv`. The backend supports PostgreSQL, including Neon, and optional Synthea-derived synthetic data.
 
 ## Current scope
 
@@ -60,24 +60,12 @@ From the repository root:
 uv run --project backend alembic -c backend/alembic.ini upgrade head
 ```
 
-If your terminal is already in `backend/`:
-
-```bash
-uv run alembic -c alembic.ini upgrade head
-```
-
 ## 4. Start the backend
 
 From the repository root:
 
 ```bash
 uv run --project backend uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-If your terminal is already in `backend/`:
-
-```bash
-uv run uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 Use Ctrl+C to stop the development server. `backend.main:app` is the application import path.
@@ -145,16 +133,12 @@ No comprehensive automated test suite has been added yet for the new flow endpoi
 
 ## Development notes
 
-### Relative imports and package install
+### `ModuleNotFoundError: No module named 'backend'`
+
+Run commands from the repository root and sync the backend project:
 
 ```bash
-uv pip install -e .
-```
-
-Reinstall if you see:
-
-```text
-ModuleNotFoundError: No module named 'backend'
+uv sync --project backend
 ```
 
 ### Migrations
@@ -183,19 +167,11 @@ Use:
 uv run --project backend uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Run the command above from the repository root. From `backend/`, use `uv run uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000`.
+Run the command above from the repository root. If your terminal is in `backend/`, run `cd ..` first.
 
 ### `alembic: command not found`
 
 Use:
-
-```bash
-uv run --project backend alembic -c backend/alembic.ini upgrade head
-```
-
-### `ModuleNotFoundError: No module named 'backend'`
-
-From the repository root, run Alembic with its backend project and config:
 
 ```bash
 uv run --project backend alembic -c backend/alembic.ini upgrade head

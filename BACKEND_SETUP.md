@@ -1,6 +1,6 @@
 # Mzima Backend Setup
 
-The FastAPI application is in the `backend/` Python package. Run commands from the repository root unless a step says otherwise. The backend dependencies and virtual environment are managed by the backend project in `backend/`.
+The FastAPI application is in the `backend/` Python package. Run the commands in this guide from the repository root. If your terminal is currently in `backend/`, return to the repository root first with `cd ..`. This also ensures the application reads the repository-root `.env` file.
 
 ## Prerequisites
 
@@ -41,18 +41,6 @@ From the repository root, use:
 uv run --project backend uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-The equivalent command using the backend virtualenv directly is:
-
-```bash
-backend/.venv/bin/python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-If already in `backend/`, run:
-
-```bash
-uv run uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
-```
-
 `backend.main:app` is the actual FastAPI import path. Stop the development server with Ctrl+C.
 
 Endpoints:
@@ -68,12 +56,6 @@ From the repository root:
 
 ```bash
 uv run --project backend alembic -c backend/alembic.ini upgrade head
-```
-
-If your terminal is already in `backend/`:
-
-```bash
-uv run alembic -c alembic.ini upgrade head
 ```
 
 ## Tests
