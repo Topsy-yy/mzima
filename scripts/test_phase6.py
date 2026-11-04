@@ -1,6 +1,6 @@
-from app.agent.workflow import AppointmentAgentWorkflow
-from app.db.session import SessionLocal
-from app.models.domain import AppointmentRequest, ClinicianDecision, RoleEnum, User
+from backend.agent.workflow import AppointmentAgentWorkflow
+from backend.db.session import SessionLocal
+from backend.models.domain import AppointmentRequest, ClinicianDecision, RoleEnum, User
 
 
 def test_agent_safety_guardrails():

@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from app.db.session import SessionLocal
-from app.models.domain import RoleEnum, User, Visit, VisitStatusEnum
+from backend.db.session import SessionLocal
+from backend.models.domain import RoleEnum, User, Visit, VisitStatusEnum
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 

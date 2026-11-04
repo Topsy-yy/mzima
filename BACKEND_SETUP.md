@@ -1,61 +1,92 @@
-# Mzima Backend — Setup & Run Guide
+# Mzima Backend Setup
 
-The backend lives in the `backend/` directory at the project root.
+The FastAPI application is in the `backend/` Python package. Run commands from the repository root unless a step says otherwise. The backend dependencies and virtual environment are managed by the backend project in `backend/`.
 
 ## Prerequisites
 
-- Python ≥ 3.11
-- [uv](https://docs.astral.sh/uv/) installed (`pip install uv` or the official installer)
-- PostgreSQL running locally (or update `DATABASE_URL` in your `.env`)
+- Python 3.11 or newer
+- [uv](https://docs.astral.sh/uv/) installed
+- A PostgreSQL database, local or hosted
+
+Check the tools:
+
+```bash
+python --version
+uv --version
+```
 
 ## First-time setup
 
-```bash
-# From the project root
-cd backend
-uv sync          # installs dependencies into backend/.venv
-cp .env.example .env   # then fill in your secrets
-```
-
-## Running the server
-
-### Option A — from the project root (recommended)
+From the repository root:
 
 ```bash
-cd /path/to/mzima
-uv run --project backend uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+uv sync --project backend
 ```
 
-### Option B — from inside backend/
+This creates/updates `backend/.venv` and installs the dependencies declared in `backend/pyproject.toml` and `backend/uv.lock`.
+
+Configure the root `.env` file, which is loaded when commands run from the repository root. Start from the example if needed:
 
 ```bash
-cd /path/to/mzima/backend
-uv run uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+cp .env.example .env
 ```
 
-> **Why `backend.main:app` and not `main:app`?**  
-> Python resolves module names from the working directory. When you run from the project root, the package is `backend`, so the entry point is `backend.main:app`. Running from inside `backend/` also works because `backend/` is on `sys.path` via the editable install — but you still use `backend.main:app` since the package name is `backend`.
+Set at least `DATABASE_URL` to a reachable PostgreSQL database and set a private `SECRET_KEY` for development. `AGENTROUTER_API_KEY` is only needed for the optional extraction integration. Do not commit real credentials. The example uses a local development database URL; the application also has a development fallback, but database-backed endpoints require a working database.
 
-## Environment variables
+## Start the server
 
-Copy `backend/.env.example` to `backend/.env` and set:
+From the repository root, use:
 
-| Variable | Description |
-|---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
-| `SECRET_KEY` | JWT signing key (change in production) |
-| `AGENTROUTER_API_KEY` | API key for the agent router service |
+```bash
+uv run --project backend uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+The equivalent command using the backend virtualenv directly is:
+
+```bash
+backend/.venv/bin/python -m uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+If already in `backend/`, run:
+
+```bash
+uv run uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+`backend.main:app` is the actual FastAPI import path. Stop the development server with Ctrl+C.
+
+Endpoints:
+
+- API docs: http://127.0.0.1:8000/docs
+- Health: http://127.0.0.1:8000/health
+- Readiness (checks the database): http://127.0.0.1:8000/ready
+- OpenAPI JSON: http://127.0.0.1:8000/api/v1/openapi.json
 
 ## Database migrations
 
+From the repository root:
+
 ```bash
-# From the project root:
 uv run --project backend alembic -c backend/alembic.ini upgrade head
 ```
 
-## Running tests
+If your terminal is already in `backend/`:
 
 ```bash
-cd backend
-uv run pytest
+uv run alembic -c alembic.ini upgrade head
+```
+
+## Tests
+
+Run the backend test suite from the repository root:
+
+```bash
+uv run --project backend pytest
+```
+
+The phase helper scripts are at the repository root and can be run with:
+
+```bash
+uv run --project backend python scripts/test_phase5.py
+uv run --project backend python scripts/test_phase6.py
 ```
