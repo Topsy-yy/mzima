@@ -334,9 +334,9 @@ The interface must actively protect clinical safety:
 - surface a handoff path rather than forcing a decision when evidence is weak
 - ensure approved actions are logged with clinician identity and reason
 
-## 14. Design recommendation for Vee
+## 14. Design recommendation for Vanessa
 
-Vee's role is not only to make the interface look good; it must also make the workflow feel safe, legible, and accountable. The frontend should be designed like a clinic operational tool:
+vanessa's role is not only to make the interface look good; it must also make the workflow feel safe, legible, and accountable. The frontend should be designed like a clinic operational tool:
 
 - patient-facing sections should be calm and respectful
 - clinician tools should be direct and evidence-based

@@ -42,6 +42,28 @@
 				"ci"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Upgrade Mzima database",
+			"type": "shell",
+			"command": "C:\\Users\\Liam Kyle\\Downloads\\mzima\\.venv\\Scripts\\python.exe",
+			"args": [
+				"-m",
+				"alembic",
+				"upgrade",
+				"head"
+			],
+			"isBackground": false
+		},
+		{
+			"label": "Seed Mzima synthetic demo",
+			"type": "shell",
+			"command": "C:\\Users\\Liam Kyle\\Downloads\\mzima\\.venv\\Scripts\\python.exe",
+			"args": [
+				"-m",
+				"scripts.seed_data"
+			],
+			"isBackground": false
 		}
 	]
 }

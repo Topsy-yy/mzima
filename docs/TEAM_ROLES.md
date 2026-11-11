@@ -1,6 +1,6 @@
 # Mzima | Team Roles
 
-Three-person team working toward a five-day prototype: patient appointment request → local agent → MCP tools → clinician approval gate → committed synthetic booking → audit log.
+Three-person team working toward a five-day prototype: patient appointment request → local agent → MCP tools → clinician approval gate → committed synthetic booking → audit log. 
 
 ---
 
@@ -35,7 +35,7 @@ See **[TAZ_TASKS.md](TAZ_TASKS.md)** for the full task and research breakdown.
 - Environment configuration, secrets management, and local networking
 
 ---
-
+ 
 ## Vee — Frontend + Clinician UX
 
 **Core responsibility:** the faces of the system. Owns the patient-facing request flow and the clinician review dashboard.

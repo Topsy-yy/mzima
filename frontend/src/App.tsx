@@ -15,11 +15,12 @@ import {
   Visit,
 } from './api';
 
-type Page = 'home' | 'patient' | 'staff' | 'clinician' | 'signin';
+type Page = 'home' | 'patient' | 'doctor-chat' | 'staff' | 'clinician' | 'signin';
 
 const pageTitles: Record<Page, string> = {
   home: 'Welcome to Mzima',
   patient: 'Appointment request',
+  'doctor-chat': 'Chat with a doctor',
   staff: 'Front desk',
   clinician: 'Review inbox',
   signin: 'Staff sign in',
@@ -92,7 +93,7 @@ function App() {
           </span>
         </a>
 
-        <div className="nav-label">WORKSPACE</div>
+        <div className="nav-label">YOUR CARE</div>
         <nav className="main-nav" aria-label="Main navigation">
           <button className={page === 'home' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('home')}>
             <span className="nav-icon">⌂</span> Home
@@ -100,6 +101,10 @@ function App() {
           <button className={page === 'patient' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('patient')}>
             <span className="nav-icon">＋</span> Appointment request
           </button>
+          <button className={page === 'doctor-chat' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('doctor-chat')}>
+            <span className="nav-icon">◌</span> Chat with a doctor
+          </button>
+          <div className="nav-label staff-nav-label">CLINIC TEAM</div>
           <button className={page === 'staff' ? 'nav-item active' : 'nav-item'} onClick={() => setPage('staff')}>
             <span className="nav-icon">▤</span> Front desk
           </button>
@@ -151,8 +156,14 @@ function App() {
         {notice && <div className="notice success-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Dismiss">×</button></div>}
         {authError && <div className="notice error-notice" role="alert">{authError}<button onClick={() => setAuthError('')} aria-label="Dismiss">×</button></div>}
 
-        {page === 'home' && <LandingPage onStartRequest={() => setPage('patient')} onStaffSignIn={() => setPage('signin')} />}
+        {page === 'home' && (
+          <LandingPage
+            onStartRequest={() => setPage('patient')}
+            onStartChat={() => setPage('doctor-chat')}
+          />
+        )}
         {page === 'patient' && <PatientPage onNotice={setNotice} />}
+        {page === 'doctor-chat' && <DoctorChatPage />}
         {page === 'staff' && (
           <StaffPage token={token} user={user} authLoading={authLoading} onSignIn={() => setPage('signin')} onNotice={setNotice} />
         )}
@@ -174,63 +185,63 @@ function App() {
 
 function LandingPage({
   onStartRequest,
-  onStaffSignIn,
+  onStartChat,
 }: {
   onStartRequest: () => void;
-  onStaffSignIn: () => void;
+  onStartChat: () => void;
 }) {
   return (
     <div className="content-wrap landing-page">
       <section className="landing-hero">
         <div className="landing-copy">
-          <div className="landing-kicker"><span /> CARE ACCESS, MADE SIMPLER</div>
-          <h2>A clearer first step <span>to care.</span></h2>
-          <p>Tell the clinic what kind of appointment you need. Your request goes to the clinic team for review.</p>
+          <div className="landing-kicker"><span /> YOUR CARE, A LITTLE CLOSER</div>
+          <h2>Better care starts with <span>a conversation.</span></h2>
+          <p>Request the care you need, keep track of the next step, or talk one-on-one with your doctor.</p>
           <div className="landing-actions">
-            <button className="primary-button landing-primary" onClick={onStartRequest}>Start an appointment request <span>→</span></button>
-            <button className="landing-secondary" onClick={onStaffSignIn}>Clinic staff sign in</button>
+            <button className="primary-button landing-primary" onClick={onStartRequest}>Request an appointment <span>→</span></button>
+            <button className="landing-secondary" onClick={onStartChat}>Chat with a doctor</button>
           </div>
-          <div className="landing-assurance"><span aria-hidden="true">✓</span> A clinic staff member reviews your request.</div>
+          <div className="landing-assurance"><span aria-hidden="true">✓</span> Your care team stays in control of every decision.</div>
         </div>
         <div className="landing-visual" aria-hidden="true">
           <div className="landing-orbit orbit-one" />
           <div className="landing-orbit orbit-two" />
-          <div className="landing-logo-card"><img src="/mzima-logo.svg" alt="" /><span>Care starts<br />with a conversation.</span></div>
-          <div className="landing-note note-top"><span className="note-icon">✳</span><span><strong>Simple to start</strong><small>Just a few details</small></span></div>
-          <div className="landing-note note-bottom"><span className="note-check">✓</span><span><strong>Reviewed by people</strong><small>Your clinic team is in charge</small></span></div>
+          <div className="landing-logo-card"><img src="/mzima-logo.svg" alt="" /><span>Here for you,<br />every step.</span></div>
+          <div className="landing-note note-top"><span className="note-icon">◌</span><span><strong>Talk one-on-one</strong><small>A more personal connection</small></span></div>
+          <div className="landing-note note-bottom"><span className="note-check">✓</span><span><strong>Care led by people</strong><small>Your clinic team is in charge</small></span></div>
         </div>
       </section>
 
       <section className="landing-details" aria-label="How Mzima works">
         <div className="landing-section-heading">
-          <div><span className="eyebrow">HOW IT WORKS</span><h3>A simple path to your next step.</h3></div>
-          <p>No diagnosis or automatic booking—just a clear way to send a request to your clinic.</p>
+          <div><span className="eyebrow">CARE, CONNECTED</span><h3>Support that meets you where you are.</h3></div>
+          <p>From your first request to a personal conversation with your care team.</p>
         </div>
         <div className="landing-steps">
           <article className="landing-step">
             <span className="landing-step-number">01</span>
-            <span className="landing-step-icon" aria-hidden="true">↗</span>
-            <h4>Tell us what you need</h4>
-            <p>Choose the service you want to request and enter a demo reference.</p>
+            <span className="landing-step-icon" aria-hidden="true">＋</span>
+            <h4>Request an appointment</h4>
+            <p>Choose a clinic service and send a simple request for your care team to review.</p>
           </article>
           <article className="landing-step">
             <span className="landing-step-number">02</span>
-            <span className="landing-step-icon" aria-hidden="true">◎</span>
-            <h4>Review before sending</h4>
-            <p>Check your details and confirm that you want to send the request.</p>
+            <span className="landing-step-icon" aria-hidden="true">◌</span>
+            <h4>Talk one-on-one</h4>
+            <p>Get a dedicated space to connect directly with your doctor.</p>
           </article>
           <article className="landing-step">
             <span className="landing-step-number">03</span>
             <span className="landing-step-icon" aria-hidden="true">♡</span>
-            <h4>The clinic follows up</h4>
-            <p>Clinic staff review the request and share any next steps with you.</p>
+            <h4>Your care team follows up</h4>
+            <p>Clinic staff review requests and guide you through what comes next.</p>
           </article>
         </div>
       </section>
 
       <div className="landing-safety">
         <span aria-hidden="true">i</span>
-        <p><strong>For this prototype, use demo details only.</strong> Mzima does not diagnose or provide emergency help. A request is not an appointment confirmation.</p>
+        <p><strong>For this prototype, use demo details only.</strong> Mzima does not diagnose or provide emergency help. Appointment requests and doctor chat are not connected to a live clinic.</p>
       </div>
     </div>
   );
@@ -410,6 +421,99 @@ function PatientPage({ onNotice }: { onNotice: (message: string) => void }) {
             <div className="step-item"><div className="step-number">3</div><div><strong>Next steps from the clinic</strong><p>The clinic will share appointment details if a booking is arranged.</p></div></div>
           </div>
           <div className="safety-callout"><strong>Need help sooner?</strong><p>This prototype does not assess symptoms or provide emergency advice. Contact your facility directly for urgent help.</p></div>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function DoctorChatPage() {
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState<Array<{ id: number; text: string }>>([]);
+
+  function handleSend(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = message.trim();
+    if (!text) return;
+
+    setMessages((current) => [...current, { id: current.length, text }]);
+    setMessage('');
+  }
+
+  return (
+    <div className="content-wrap doctor-chat-page">
+      <div className="doctor-chat-intro">
+        <div>
+          <div className="eyebrow">PERSONAL CARE, ONE-ON-ONE</div>
+          <h2>A space to talk with your doctor.</h2>
+          <p>Ask a question and continue the conversation with your care team.</p>
+        </div>
+        <span className="chat-preview-status"><i /> Chat preview</span>
+      </div>
+
+      <div className="doctor-chat-layout">
+        <section className="panel doctor-conversation" aria-label="One-on-one doctor chat">
+          <header className="doctor-conversation-header">
+            <div className="doctor-profile">
+              <span className="doctor-profile-avatar" aria-hidden="true">+</span>
+              <span><strong>Your clinic doctor</strong><small>One-on-one conversation</small></span>
+            </div>
+            <span className="doctor-not-connected">Not connected</span>
+          </header>
+
+          <div className="doctor-chat-notice" role="note">
+            <span aria-hidden="true">i</span>
+            <p>This prototype does not send messages to a doctor. Anything you type stays in this browser session and is not monitored.</p>
+          </div>
+
+          <div className="doctor-messages" aria-live="polite">
+            {messages.length === 0 ? (
+              <div className="doctor-chat-empty">
+                <span aria-hidden="true">◌</span>
+                <strong>Your conversation starts here</strong>
+                <p>In a connected Mzima service, you could send a private message directly to your doctor.</p>
+              </div>
+            ) : messages.map((item) => (
+              <div className="doctor-message patient-message" key={item.id}>
+                <p>{item.text}</p>
+                <small>Preview only · Not sent</small>
+              </div>
+            ))}
+          </div>
+
+          <form className="doctor-composer" onSubmit={handleSend}>
+            <label className="visually-hidden" htmlFor="doctor-message">Write a message to your doctor</label>
+            <textarea
+              id="doctor-message"
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder="Write a message…"
+              rows={2}
+              maxLength={500}
+            />
+            <div className="doctor-composer-footer">
+              <span>Demo preview only — please don’t enter real health details.</span>
+              <button className="primary-button" type="submit" disabled={!message.trim()}>
+                Preview message <span>→</span>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <aside className="doctor-chat-side">
+          <section className="panel doctor-chat-info">
+            <span className="doctor-info-icon" aria-hidden="true">✦</span>
+            <div className="eyebrow">A MORE PERSONAL CONNECTION</div>
+            <h3>Care is a conversation.</h3>
+            <p>Get a dedicated space to talk with your doctor, ask questions, and feel supported between visits.</p>
+            <div className="doctor-info-divider" />
+            <div className="doctor-info-row"><span aria-hidden="true">◉</span><p><strong>Just you and your doctor</strong><br />A focused one-on-one chat.</p></div>
+            <div className="doctor-info-row"><span aria-hidden="true">⌁</span><p><strong>Here when you need us</strong><br />Continue the conversation at your pace.</p></div>
+          </section>
+          <div className="doctor-chat-safety">
+            <strong>Need urgent help?</strong>
+            <p>This chat is not monitored. Contact your local health facility or emergency service for urgent care.</p>
+          </div>
         </aside>
       </div>
     </div>

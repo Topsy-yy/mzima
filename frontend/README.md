@@ -1,6 +1,6 @@
 # Mzima frontend
 
-React + TypeScript frontend for the local Mzima API prototype. The interface has a public landing page, guided patient appointment-request chat, staff walk-in queue/front desk, and authenticated clinician review inbox.
+React + TypeScript frontend for the local Mzima API prototype. The interface has a public landing page, guided patient appointment-request chat, a one-on-one doctor-chat preview, staff walk-in queue/front desk, and authenticated clinician review inbox.
 
 ## Start locally
 
@@ -15,6 +15,8 @@ The Vite development server proxies `/api`, `/health`, and `/ready` to `http://1
 The frontend calls the implemented `/api/v1` routes for staff login, appointment-request submission and review, walk-in queue retrieval, check-in, call, and staff triage-record updates. Staff access tokens are held in session storage and sent as bearer tokens. Server-side role checks remain authoritative.
 
 The patient flow accepts only `patient_identifier` and `requested_specialty`, uses synthetic references, previews before sending, and displays the API receipt. It is a guided UI, not a live AI chat service. The clinician inbox displays deterministic slot evidence and allows a shift lead/admin to reject or approve and book the proposed slot. No diagnosis or clinical priority is generated. The interface is English-only; voice input, model proposals, request history, and booking notifications are not implemented. Clinicians cannot edit a proposal because no edit contract exists.
+
+The doctor-chat screen is a visual, local-only preview: there is no doctor-messaging API, messages are not delivered or monitored, and the screen does not save them beyond the current browser session. Do not enter real health details.
 
 Walk-in endpoints are the existing prototype queue workflow, separate from the planned agentic appointment-routing workflow. This interface is for synthetic data and is not for live care.
 
