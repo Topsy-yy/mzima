@@ -204,11 +204,7 @@ function LandingPage({
           <div className="landing-assurance"><span aria-hidden="true">✓</span> Your care team stays in control of every decision.</div>
         </div>
         <div className="landing-visual" aria-hidden="true">
-          <div className="landing-orbit orbit-one" />
-          <div className="landing-orbit orbit-two" />
-          <div className="landing-logo-card"><img src="/mzima-logo.svg" alt="" /><span>Here for you,<br />every step.</span></div>
-          <div className="landing-note note-top"><span className="note-icon">◌</span><span><strong>Talk one-on-one</strong><small>A more personal connection</small></span></div>
-          <div className="landing-note note-bottom"><span className="note-check">✓</span><span><strong>Care led by people</strong><small>Your clinic team is in charge</small></span></div>
+          <div className="landing-photo" />
         </div>
       </section>
 

@@ -18,6 +18,8 @@ The patient flow accepts only `patient_identifier` and `requested_specialty`, us
 
 The doctor-chat screen is a visual, local-only preview: there is no doctor-messaging API, messages are not delivered or monitored, and the screen does not save them beyond the current browser session. Do not enter real health details.
 
+The landing-page hero photo is loaded from `public/images/landing_page.png`; it is confined to the right-side hero panel and fades toward the headline.
+
 Walk-in endpoints are the existing prototype queue workflow, separate from the planned agentic appointment-routing workflow. This interface is for synthetic data and is not for live care.
 
 ## Build
