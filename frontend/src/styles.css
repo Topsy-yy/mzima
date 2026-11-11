@@ -612,10 +612,9 @@ input::placeholder, textarea::placeholder { color: #9aa8bb; }
   background-color: #b9e2ff;
   background-image:
     linear-gradient(90deg, #eff7ff 0%, rgba(239, 247, 255, .94) 9%, rgba(239, 247, 255, .72) 25%, rgba(239, 247, 255, .14) 58%, rgba(239, 247, 255, 0) 100%),
-    linear-gradient(135deg, #d7efff 0%, #96d0f7 48%, #68b5ec 100%),
     url('/images/landing_page.png');
-  background-position: center, center, center;
-  background-size: cover;
+  background-position: center, center;
+  background-size: cover, cover;
 }
 
 @media (max-width: 1000px) {
@@ -630,7 +629,6 @@ input::placeholder, textarea::placeholder { color: #9aa8bb; }
     border-radius: 0 0 21px 21px;
     background-image:
       linear-gradient(180deg, #eff7ff 0%, rgba(239, 247, 255, .48) 26%, rgba(239, 247, 255, 0) 65%),
-      linear-gradient(135deg, #d7efff 0%, #96d0f7 48%, #68b5ec 100%),
       url('/images/landing_page.png');
   }
 }
